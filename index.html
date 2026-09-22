@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta name="theme-color" content="#101512" />
+    <title>五行守阵</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true"><span>阵</span></div>
+          <div>
+            <h1>五行守阵</h1>
+            <p id="wave-label">第 1 波 · 金势来袭</p>
+          </div>
+        </div>
+        <div class="resources" aria-label="战局资源">
+          <button id="home-button" class="icon-button" type="button" aria-label="返回山门" title="返回山门" hidden>⌂</button>
+          <div><span class="resource-icon coin">◆</span><strong id="gold-value">160</strong></div>
+          <div><span class="resource-icon heart">♥</span><strong id="life-value">10</strong></div>
+          <button id="sound-button" class="icon-button" type="button" aria-label="声音设置" aria-controls="sound-panel" aria-expanded="false" title="声音设置">♫</button>
+        </div>
+        <section id="sound-panel" class="sound-panel" aria-label="声音设置" hidden>
+          <div class="sound-heading"><strong>声音</strong><label class="mute-control"><input id="sound-muted" type="checkbox" />静音</label></div>
+          <label class="volume-row" for="volume-master"><span>总音量</span><output id="value-master" for="volume-master">70%</output><input id="volume-master" type="range" min="0" max="100" value="70" /></label>
+          <label class="volume-row" for="volume-music"><span>背景音乐</span><output id="value-music" for="volume-music">30%</output><input id="volume-music" type="range" min="0" max="100" value="30" /></label>
+          <label class="volume-row" for="volume-effects"><span>战斗音效</span><output id="value-effects" for="volume-effects">60%</output><input id="volume-effects" type="range" min="0" max="100" value="60" /></label>
+        </section>
+      </header>
+
+      <section id="home-screen" class="home-screen" aria-label="山门主页面">
+        <div class="home-hero">
+          <canvas id="home-canvas" class="home-background" role="img" aria-label="云海仙山之间的山门与五行祭坛"></canvas>
+          <div class="home-title"><p>山海有灵 · 五行成阵</p><h2>五行守阵</h2></div>
+          <div class="hero-seal" aria-hidden="true">无尽<br />守境</div>
+        </div>
+        <div class="home-setup">
+          <div class="home-section-heading"><h3>择境</h3><div class="mode-switch" aria-label="挑战模式"><button type="button" data-mode="endless" aria-pressed="true">无尽守境</button><button type="button" data-mode="trial" aria-pressed="false">定序试炼</button></div></div>
+          <div id="map-choices" class="map-choices" aria-label="选择地图"></div>
+          <div id="map-record" class="map-record" aria-live="polite"></div>
+          <div id="origin-panel" class="home-origin">
+            <div class="home-section-heading"><h3>定本命</h3><span id="home-origin-name">金 · 穿透锋锐</span></div>
+            <div id="origin-choices" class="origin-choices">
+              <button data-element="metal" class="metal" type="button" aria-pressed="true"><b>金</b><span>穿透锋锐</span></button>
+              <button data-element="wood" class="wood" type="button" aria-pressed="false"><b>木</b><span>缠绕生长</span></button>
+              <button data-element="water" class="water" type="button" aria-pressed="false"><b>水</b><span>迟缓控场</span></button>
+              <button data-element="fire" class="fire" type="button" aria-pressed="false"><b>火</b><span>爆燃群攻</span></button>
+              <button data-element="earth" class="earth" type="button" aria-pressed="false"><b>土</b><span>重击坚守</span></button>
+            </div>
+          </div>
+          <div class="home-start"><p id="home-trial-label">青岚古阵 · 无尽守境</p><div><button id="resume-button" class="text-button" type="button" hidden>继续守阵</button><button id="enter-button" class="primary-button" type="button">入阵 · 开始挑战</button></div></div>
+        </div>
+      </section>
+
+      <section class="battlefield" aria-label="游戏战场" hidden>
+        <canvas id="game-canvas"></canvas>
+        <div class="field-label" aria-hidden="true"><span id="field-map-name">青岚古阵</span><small id="field-mode-name">无尽守境</small></div>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+        <button id="pause-button" class="icon-button pause-button" type="button" aria-label="暂停" title="暂停">Ⅱ</button>
+        <div id="result-panel" class="result-panel hidden">
+          <p id="result-kicker">守阵结果</p>
+          <h2 id="result-title">大阵已破</h2>
+          <p id="result-copy"></p>
+          <button id="restart-button" class="primary-button" type="button">重新布阵</button>
+          <button id="result-home-button" class="text-button" type="button">返回山门</button>
+        </div>
+        <div id="loot-panel" class="choice-panel hidden">
+          <p>精英战利品</p>
+          <h2 id="loot-title">获得水元素</h2>
+          <div id="loot-options" class="loot-options"></div>
+          <span id="loot-copy">可与已有元素融合，也可放入空阵位</span>
+          <div class="loot-actions">
+            <button id="stash-loot" class="text-button" type="button">收入元素栏</button>
+            <button id="use-loot" class="primary-button" type="button">立即布阵</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="command-panel" hidden>
+        <div id="wave-forecast" class="wave-forecast" aria-live="polite"></div>
+        <div class="status-row">
+          <div class="threat">
+            <span>本波主属性</span>
+            <strong id="threat-value"><i class="element-dot fire"></i>火</strong>
+          </div>
+          <button id="wave-button" class="primary-button" type="button">开始第 1 波</button>
+        </div>
+
+        <div id="selection-panel" class="selection-panel hidden">
+          <div>
+            <strong id="selected-name">水塔 · 壹阶</strong>
+            <span id="selected-detail">克火 · 减速</span>
+          </div>
+          <div class="selection-actions">
+            <button id="sell-button" class="text-button" type="button">出售 +30</button>
+            <button id="repair-button" class="text-button hidden" type="button">修复 30</button>
+            <button id="upgrade-button" class="primary-button compact" type="button">升级 70</button>
+          </div>
+        </div>
+
+        <div class="tower-tray" aria-label="五行防御塔">
+          <button class="tower-card metal" data-element="metal" type="button">
+            <span class="tower-glyph">金</span><strong>金锋</strong><small>50 · 穿透</small>
+          </button>
+          <button class="tower-card wood" data-element="wood" type="button">
+            <span class="tower-glyph">木</span><strong>青藤</strong><small>50 · 缠绕</small>
+          </button>
+          <button class="tower-card water" data-element="water" type="button">
+            <span class="tower-glyph">水</span><strong>玄水</strong><small>50 · 减速</small>
+          </button>
+          <button class="tower-card fire" data-element="fire" type="button">
+            <span class="tower-glyph">火</span><strong>赤焰</strong><small>50 · 范围</small>
+          </button>
+          <button class="tower-card earth" data-element="earth" type="button">
+            <span class="tower-glyph">土</span><strong>厚土</strong><small>50 · 重击</small>
+          </button>
+        </div>
+        <div class="inventory-row">
+          <span>元素栏</span>
+          <div id="element-inventory" class="element-inventory">
+            <i>空</i><i>空</i><i>空</i>
+          </div>
+        </div>
+        <p class="hint" id="hint-text">选择元素塔，再点击阵位布置</p>
+      </section>
+    </main>
+    <div id="skill-tooltip" class="skill-tooltip" role="tooltip"></div>
+    <script src="art.js"></script>
+    <script src="home-art.js"></script>
+    <script src="audio.js"></script>
+    <script src="world.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
