@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>五行基础塔 · 外观审核</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#102d30;color:#e4ead6;font-family:Microsoft YaHei,sans-serif}header{padding:24px 32px;border-bottom:1px solid #657a64;display:flex;align-items:center;justify-content:space-between;gap:20px}h1{margin:0;font-size:24px}a{color:#eace8c}canvas{display:block;width:100%;max-width:1200px;margin:auto}p{margin:8px 0 0;color:#a6bcad;font-size:13px}
+</style>
+<header><div><h1>五行基础塔 · 外观审核</h1><p>金、木、水、火、土 · 一级 / 二级 / 三级</p></div><a href="index.html">进入游戏预览</a></header>
+<canvas id="review" width="1200" height="1250"></canvas>
+<script src="art.js"></script>
+<script>
+const canvas=document.getElementById('review'),c=canvas.getContext('2d');
+const kinds=['metal','wood','water','fire','earth'],names=['金 · 剑阵','木 · 灵树','水 · 环流','火 · 火坛','土 · 悬岩'];
+function frame(now){const time=now/1000;c.clearRect(0,0,1200,1250);kinds.forEach((kind,row)=>{const y=row*250;c.fillStyle=row%2?'#173b3b':'#123234';c.fillRect(0,y,1200,250);c.fillStyle=ElementArt.colors[kind];c.font='bold 25px Microsoft YaHei';c.fillText(names[row],35,y+110);for(let level=1;level<=3;level++){const x=300+(level-1)*300,base=y+164;ElementArt.towerAuraBack(c,kind,x,base,64,time,level);ElementArt.tower(c,kind,x,base,64,time,level);ElementArt.towerAuraFront(c,kind,x,base,64,time,level);c.fillStyle='#c9d8c4';c.font='15px Microsoft YaHei';c.textAlign='center';c.fillText('Lv.'+level,x,y+234);c.textAlign='left';}});requestAnimationFrame(frame)}requestAnimationFrame(frame);
+</script>
+</html>
