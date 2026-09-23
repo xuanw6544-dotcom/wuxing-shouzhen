@@ -71,7 +71,7 @@ for(let i=0;i<100;i++)assert.equal(a(),b());
     await page.setViewportSize({width:844,height:390});
     await page.evaluate(()=>{__qa.state.result=false;document.getElementById('result-panel').classList.add('hidden');__qa.showBattle();__qa.showLoot();});
     const lootBox=await page.locator('#loot-panel').boundingBox();
-    assert(lootBox&&lootBox.width===844&&lootBox.height<=340,'loot overlay stays inside the horizontal battlefield');
+    assert(lootBox&&lootBox.x>=0&&lootBox.x+lootBox.width<=844&&lootBox.height<=346,'loot overlay stays inside the horizontal battlefield');
     assert.equal(await page.locator('#element-inventory > *').count(),6);
     await page.screenshot({path:path.join(root,'artifacts','loot-overlay-844.png')});
     const records=JSON.parse(await page.evaluate(()=>localStorage.getItem('wuxing.records.v1')));

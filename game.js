@@ -40,9 +40,9 @@
   const state = {
     scene: "menu", mapId: "qinglan", runMode: "endless", runSeed: "", combatTime: 0, commanderKilled: false,
     gold: 160, life: 10, wave: 0, waveActive: false, paused: false, result: false,
-    initialElement: null, buildElement: null, pendingCore: null, droppedElement: null, lootOptions: [],
+    initialElement: null, buildElement: null, pendingCore: null, pendingBuildSlot: null, previewBuild: null, droppedElement: null, lootOptions: [],
     selectedTower: null, towers: [], enemies: [], projectiles: [], effects: [], zones: [], inventory: [],
-    spawnQueue: [], spawnTimer: 0, time: 0, kills: 0, coreId: 0, dpr: 1, width: 1, height: 1
+    spawnQueue: [], spawnTimer: 0, time: 0, kills: 0, coreId: 0, nextWaveReadyAt: 12, waveDrawerOpen: false, waveAutoOpenedFor: 0, dpr: 1, width: 1, height: 1
   };
 
   const ui = {
@@ -52,6 +52,9 @@
     toast: document.getElementById("toast"), hint: document.getElementById("hint-text"),
     selection: document.getElementById("selection-panel"), selectedName: document.getElementById("selected-name"),
     selectedDetail: document.getElementById("selected-detail"), sell: document.getElementById("sell-button"),
+    selectedAvatar: document.getElementById("selected-avatar"), selectedAttack: document.getElementById("selected-attack"),
+    selectedSpeed: document.getElementById("selected-speed"), selectedDps: document.getElementById("selected-dps"), selectedHealth: document.getElementById("selected-health"),
+    skill: document.getElementById("skill-button"),
     repair: document.getElementById("repair-button"),
     upgrade: document.getElementById("upgrade-button"), result: document.getElementById("result-panel"),
     resultKicker: document.getElementById("result-kicker"), resultTitle: document.getElementById("result-title"),
@@ -75,8 +78,18 @@
     originName: document.getElementById("home-origin-name"), trialLabel: document.getElementById("home-trial-label"),
     forecast: document.getElementById("wave-forecast"), battlefield: document.querySelector(".battlefield"),
     commands: document.querySelector(".command-panel"), mapName: document.getElementById("field-map-name"),
-    modeName: document.getElementById("field-mode-name"), resultHome: document.getElementById("result-home-button")
+    modeName: document.getElementById("field-mode-name"), resultHome: document.getElementById("result-home-button"),
+    waveMini: document.getElementById("wave-mini-card"), waveMiniNumber: document.getElementById("wave-mini-number"),
+    waveCountdown: document.getElementById("wave-countdown"), waveMiniElement: document.getElementById("wave-mini-element"),
+    waveDrawer: document.getElementById("wave-drawer"), waveDrawerTitle: document.getElementById("wave-drawer-title"),
+    waveClose: document.getElementById("wave-close-button")
   });
+  function setWaveDrawer(open) {
+    state.waveDrawerOpen=!!open;
+    ui.waveDrawer.hidden=!state.waveDrawerOpen;
+    ui.waveMini.setAttribute("aria-expanded",String(state.waveDrawerOpen));
+    ui.commands.classList.toggle("wave-open",state.waveDrawerOpen);
+  }
   function formatDuration(seconds) { const n=Math.max(0,Math.floor(Number(seconds)||0));return `${Math.floor(n/60)}分${n%60}秒`; }
   function saveRecord() {
     if(!state.initialElement)return;
@@ -171,6 +184,7 @@
   function resize() {
     if(ui.battlefield.hidden)return;
     const rect = canvas.getBoundingClientRect();
+    if(rect.width<2||rect.height<2){requestAnimationFrame(resize);return;}
     state.dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(rect.width * state.dpr);
     canvas.height = Math.round(rect.height * state.dpr);
@@ -193,14 +207,14 @@
   function chooseOrigin(element) {
     if(state.scene==="menu"){menu.element=element;renderMenu();audio.cue("select");return;}
     state.initialElement = element;
-    state.buildElement = element;
+    state.buildElement = null;
     ui.tray.classList.add("single");
     ui.cards.forEach(card => {
       const active = card.dataset.element === element;
       card.classList.toggle("locked", !active);
-      card.classList.toggle("selected", active);
+      card.classList.remove("selected");
     });
-    ui.hint.textContent = `本命${ELEMENTS[element].name}已觉醒，点击空阵位布塔`;
+    ui.hint.textContent = `点击空阵位，再选择${ELEMENTS[element].name}塔`;
     showToast(`${ELEMENTS[element].name}行本命已定`);
     audio.cue("select");
     updateUI();
@@ -246,8 +260,9 @@
     state.pendingCore = core;
     state.buildElement = null;
     state.selectedTower = null;
+    state.previewBuild = state.pendingBuildSlot===null ? null : {slot:state.pendingBuildSlot,element:core.element,core};
     ui.cards.forEach(card => card.classList.remove("selected"));
-    ui.hint.textContent = `已选${ELEMENTS[core.element].name}核心：点击空阵位落塔，或点击已有塔融合`;
+    ui.hint.textContent = state.previewBuild ? `预览${ELEMENTS[core.element].name}塔：再次点击阵位确认` : `已选${ELEMENTS[core.element].name}核心：点击空阵位预览，或点击已有塔融合`;
     renderInventory();
     updateUI();
   }
@@ -260,8 +275,10 @@
 
   function resumeOriginBuild(message = "继续使用本命元素布阵") {
     state.pendingCore = null;
-    state.buildElement = state.initialElement;
-    ui.cards.forEach(card => card.classList.toggle("selected", card.dataset.element === state.initialElement));
+    state.pendingBuildSlot = null;
+    state.previewBuild = null;
+    state.buildElement = null;
+    ui.cards.forEach(card => card.classList.remove("selected"));
     ui.hint.textContent = message;
     renderInventory();
     updateUI();
@@ -301,6 +318,7 @@
     audio.cue("wave");
     state.spawnQueue = info.enemies;
     state.spawnTimer = 0;
+    setWaveDrawer(false);
     ui.waveButton.disabled = true;
     showToast(info.boss ? `第 ${state.wave + 1} 波：${ELEMENTS[info.element].name}行 Boss 降临` : `第 ${state.wave + 1} 波：${ELEMENTS[info.element].name}行来袭`);
     updateUI();
@@ -321,6 +339,8 @@
     state.gold -= BASE_COST;
     state.towers.push({ slot, element, secondary: null, level: 1, hp: 100, maxHp: 100, cooldown: 0, burnUntil: 0, invested: BASE_COST, shotCount: 0 });
     state.buildElement = null;
+    state.pendingBuildSlot = null;
+    state.previewBuild = null;
     ui.cards.forEach(card => card.classList.remove("selected"));
     showToast(`${ELEMENTS[element].name}塔落阵`);
     audio.cue("select");
@@ -368,6 +388,8 @@
   function selectTower(tower) {
     state.selectedTower = tower;
     state.buildElement = null;
+    state.pendingBuildSlot = null;
+    state.previewBuild = null;
     ui.cards.forEach(card => card.classList.remove("selected"));
     updateUI();
   }
@@ -671,6 +693,8 @@
     if (state.waveActive && !state.spawnQueue.length && !state.enemies.length) {
       state.waveActive = false; state.wave++;
       state.gold += 32 + state.wave * 4;
+      state.nextWaveReadyAt = state.time + 12;
+      state.waveAutoOpenedFor = 0;
       const bossCleared=state.wave%10===0;
       saveRecord();
       if(state.commanderKilled){showToast(bossCleared?`第 ${state.wave} 波 Boss 已击败，获得三选一核心`:`第 ${state.wave} 波守住，精英掉落元素核心`);showLoot(bossCleared);}
@@ -681,8 +705,9 @@
 
   function draw() {
     const w = state.width, h = state.height;
+    if(w<2||h<2)return;
     ctx.clearRect(0,0,w,h);
-    art.ground(ctx,w,h,MAP); drawZones(); drawGate(w,h); drawSlots(w,h); drawTowers(w,h); drawEnemies(); drawProjectiles(); drawEffects();
+    art.ground(ctx,w,h,MAP); drawZones(); drawGate(w,h); drawSlots(w,h); drawBuildPreview(w,h); drawTowers(w,h); drawEnemies(); drawProjectiles(); drawEffects();
     if (state.paused) {
       ctx.fillStyle = "rgba(8,12,9,.68)"; ctx.fillRect(0,0,w,h); ctx.fillStyle = "#f2ead5";
       ctx.textAlign = "center"; ctx.font = "700 24px Microsoft YaHei"; ctx.fillText("阵势暂缓",w/2,h/2);
@@ -710,9 +735,21 @@
     MAP.slots.forEach((p,index)=>{
       if (state.towers.some(t=>t.slot===index)) return;
       const x=p[0]*w,y=p[1]*h,r=Math.max(14,w*.025);
-      const activeElement=state.pendingCore?.element||state.buildElement;
-      art.slot(ctx,x,y,r,activeElement?ELEMENTS[activeElement].color:"#a4b89f",!!activeElement,state.time);
+      const selected=state.pendingBuildSlot===index;
+      const activeElement=selected?(state.previewBuild?.element||state.pendingCore?.element||state.initialElement):null;
+      art.slot(ctx,x,y,r,activeElement?ELEMENTS[activeElement].color:"#a4b89f",selected,state.time);
+      if(selected){ctx.beginPath();ctx.arc(x,y,r+8,0,Math.PI*2);ctx.strokeStyle=activeElement?ELEMENTS[activeElement].color:"#f3d998";ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);}
     });
+  }
+
+  function drawBuildPreview(w,h) {
+    const preview=state.previewBuild;
+    if(!preview||state.towers.some(t=>t.slot===preview.slot))return;
+    const [px,py]=MAP.slots[preview.slot],x=px*w,y=py*h,form=towerForm({element:preview.element,secondary:null,level:1});
+    ctx.save();ctx.globalAlpha=.62;
+    ctx.beginPath();ctx.arc(x,y,w*.18,0,Math.PI*2);ctx.fillStyle="rgba(226,211,153,.08)";ctx.fill();ctx.strokeStyle=form.color;ctx.lineWidth=1.5;ctx.stroke();
+    art.tower(ctx,form.kind,x,y,Math.max(19,w*.035),state.time,1,false);
+    ctx.globalAlpha=1;ctx.fillStyle="#173638e8";ctx.fillRect(x-45,y+31,90,19);ctx.fillStyle="#f4e6b7";ctx.font="600 10px Microsoft YaHei";ctx.textAlign="center";ctx.fillText("再次点击确认",x,y+44);ctx.restore();
   }
 
   function drawTowers(w,h) {
@@ -799,26 +836,42 @@
     const info=nextWaveInfo(),e=ELEMENTS[info.element];
     ui.waveLabel.textContent=`第 ${state.wave+1} 波 · ${info.boss?`${e.name}王降临`:`${e.name}势来袭`}`;
     ui.threat.innerHTML=`<i class="element-dot ${info.element}" style="background:${e.color}"></i>${e.name}${info.boss?" Boss":""}`;
-    ui.waveButton.textContent=state.waveActive?"迎敌中…":state.pendingCore?"请先安置元素":`开始第 ${state.wave+1} 波`;
+    const waveNumber=state.wave+1,wait=Math.max(0,Math.ceil(state.nextWaveReadyAt-state.time));
+    ui.waveMiniNumber.textContent=`Wave ${waveNumber}`;
+    ui.waveDrawerTitle.textContent=`Wave ${waveNumber}`;
+    ui.waveCountdown.textContent=state.waveActive?"战斗中":wait?`${wait}s`:"READY";
+    ui.waveMiniElement.textContent=e.name;ui.waveMiniElement.className=`wave-element ${info.element}`;ui.waveMiniElement.setAttribute("aria-label",`${e.name}元素`);
+    ui.waveMini.classList.toggle("ready",!state.waveActive&&!wait);
+    if(!state.waveActive&&!wait&&!state.result&&ui.loot.classList.contains("hidden")&&state.waveAutoOpenedFor!==waveNumber){state.waveAutoOpenedFor=waveNumber;setWaveDrawer(true);}
+    ui.waveButton.textContent=state.waveActive?"迎敌中…":state.pendingCore?"请先安置元素":`开始 Wave ${waveNumber}`;
     ui.waveButton.disabled=state.waveActive||state.result||!state.initialElement||!!state.pendingCore||!ui.loot.classList.contains("hidden");
     ui.cards.forEach(card=>card.disabled=state.gold<BASE_COST || state.result || !!state.pendingCore || card.dataset.element!==state.initialElement);
-    const previewNumber=state.wave+(state.waveActive?2:1),signature=`${MAP.id}:${previewNumber}`;
+    ui.commands.classList.toggle("build-mode",state.pendingBuildSlot!==null);
+    const previewNumber=state.wave+(state.waveActive?1:1),signature=`${MAP.id}:${previewNumber}`;
     if(ui.forecast.dataset.wave!==signature){
       ui.forecast.dataset.wave=signature;const plan=world.wavePlan(MAP,previewNumber);ui.forecast.replaceChildren();
-      const title=document.createElement("strong");title.textContent=`下一波 ${previewNumber} · 第${plan.chapter}章`;ui.forecast.appendChild(title);
-      const details=[`${plan.attributes.map(e=>ELEMENTS[e].name).join(" / ")}属性`,`${plan.count-1}小怪 + ${plan.boss?"Boss":"精英"}`,plan.pattern,plan.entryNames.join(" / ")];
-      for(const text of details){const span=document.createElement("span");span.textContent=text;ui.forecast.appendChild(span);}
+      const details=[
+        ["敌人",`${ELEMENTS[plan.element].name} × ${plan.count-1} · ${plan.boss?"Boss × 1":"精英 × 1"}`],
+        ["奖励",`+${32+previewNumber*4} Gold`],
+        ["入口",plan.entryNames.join(" / ")],
+        ["Boss",plan.boss?`${ELEMENTS[plan.element].name}王`:"无"]
+      ];
+      for(const [label,value] of details){const row=document.createElement("p"),span=document.createElement("span"),strong=document.createElement("strong");span.textContent=label;strong.textContent=value;row.append(span,strong);ui.forecast.appendChild(row);}
       ui.forecast.classList.toggle("boss-wave",plan.boss);
     }
     if (state.selectedTower && state.towers.includes(state.selectedTower)) {
       const t=state.selectedTower, el=ELEMENTS[t.element], form=towerForm(t), upgradeCost=45+t.level*30;
       ui.selection.classList.remove("hidden");
+      ui.commands.classList.add("tower-mode");
       ui.selectedName.textContent=`${form.name} · ${["壹","贰","叁"][t.level-1]}阶${t.buffed?" · 相生":""}`;
       const elementNames=[t.element,t.secondary].filter(Boolean).map(element=>ELEMENTS[element].name).join("+");
       const thirdHit=["bog","mist","lava","steam","mud"].includes(form.kind);
       const chance=["thunder","spike","blade","rock","ice"].includes(form.kind);
       const trigger=thirdHit?" · 每第三击触发":chance?` · ${75+(t.level-1)*7}%触发`:"";
-      ui.selectedDetail.textContent=`${elementNames} · ${form.effect}${trigger} · 生命 ${Math.ceil(t.hp)}/${t.maxHp}${t.burnUntil>state.time?" · 灼烧减速":""}${t.buffed?" · 威力提升":""}`;
+      const attack=(13+t.level*8)*(t.secondary?1.12:1)*(t.buffed?1.2:1),interval=[1.05,.84,.66][t.level-1]/(t.buffed?1.15:1);
+      ui.selectedAttack.textContent=Math.round(attack);ui.selectedSpeed.textContent=`${interval.toFixed(2)}s`;ui.selectedDps.textContent=Math.round(attack/interval);ui.selectedHealth.textContent=`${Math.ceil(t.hp)}/${t.maxHp}`;
+      ui.selectedDetail.textContent=`${elementNames} · ${form.effect}${trigger}${t.burnUntil>state.time?" · 灼烧减速":""}${t.buffed?" · 威力提升":""}`;
+      if(ui.selectedAvatar.dataset.kind!==form.kind){ui.selectedAvatar.replaceChildren();art.decorate(ui.selectedAvatar,form.kind,"selected-art");ui.selectedAvatar.dataset.kind=form.kind;}
       ui.sell.textContent=`出售 +${Math.floor(t.invested*.65)}`;
       ui.upgrade.textContent=t.level>=3?"已至叁阶":`升级 ${upgradeCost}`;
       ui.upgrade.disabled=t.level>=3 || state.gold<upgradeCost;
@@ -826,7 +879,7 @@
       ui.repair.classList.toggle("hidden",t.hp>=t.maxHp);
       ui.repair.textContent=`修复 ${repairCost}`;
       ui.repair.disabled=state.waveActive||t.hp>=t.maxHp||state.gold<repairCost;
-    } else { ui.selection.classList.add("hidden"); state.selectedTower=null; }
+    } else { ui.selection.classList.add("hidden");ui.commands.classList.remove("tower-mode");state.selectedTower=null; }
   }
 
   let toastTimer;
@@ -843,11 +896,11 @@
   function reset() {
     audio.setPaused(false);
     ui.pause.textContent="Ⅱ";ui.pause.setAttribute("aria-label","暂停");
-    Object.assign(state,{gold:160,life:10,wave:0,waveActive:false,paused:false,result:false,initialElement:null,buildElement:null,pendingCore:null,droppedElement:null,lootOptions:[],selectedTower:null,towers:[],enemies:[],projectiles:[],effects:[],zones:[],inventory:[],spawnQueue:[],spawnTimer:0,time:0,kills:0,coreId:0});
+    Object.assign(state,{gold:160,life:10,wave:0,waveActive:false,paused:false,result:false,initialElement:null,buildElement:null,pendingCore:null,pendingBuildSlot:null,previewBuild:null,droppedElement:null,lootOptions:[],selectedTower:null,towers:[],enemies:[],projectiles:[],effects:[],zones:[],inventory:[],spawnQueue:[],spawnTimer:0,time:0,kills:0,coreId:0,nextWaveReadyAt:12,waveDrawerOpen:false,waveAutoOpenedFor:0});
     MAP=world.maps[menu.mapId];state.mapId=menu.mapId;state.runMode=menu.mode;state.combatTime=0;state.lootHistory=[];state.commanderKilled=false;
     state.runSeed=menu.mode==="trial"?`${menu.mapId}:trial:1`:`${menu.mapId}:${Date.now()}:${Math.random()}`;
     lootRandom=world.random(`${state.runSeed}:loot`);combatRandom=world.random(`${state.runSeed}:combat`);
-    ui.result.classList.add("hidden");ui.loot.classList.add("hidden");ui.tray.classList.remove("single");
+    ui.result.classList.add("hidden");ui.loot.classList.add("hidden");ui.tray.classList.remove("single");setWaveDrawer(false);
     ui.cards.forEach(c=>{c.classList.remove("selected");c.classList.remove("locked");});renderInventory();updateUI();
     showBattle();chooseOrigin(menu.element);window.scrollTo({top:0,behavior:"instant"});
   }
@@ -881,19 +934,27 @@
     const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;
     let nearest=-1,distance=Infinity;
     MAP.slots.forEach((p,i)=>{const d=Math.hypot(x-p[0]*state.width,y-p[1]*state.height);if(d<distance){distance=d;nearest=i;}});
-    if(distance>Math.max(28,state.width*.045)){state.selectedTower=null;updateUI();return;}
-    if(state.pendingCore){useCoreAtSlot(nearest);return;}
+    if(distance>Math.max(28,state.width*.045)){state.selectedTower=null;state.pendingBuildSlot=null;state.previewBuild=null;state.buildElement=null;updateUI();return;}
     const tower=state.towers.find(t=>t.slot===nearest);
-    if(tower) selectTower(tower); else if(state.buildElement) buildTower(nearest,state.buildElement); else showToast("先选择本命塔或元素核心");
+    if(tower){if(state.pendingCore)useCoreAtSlot(nearest);else selectTower(tower);return;}
+    if(state.previewBuild?.slot===nearest){if(state.pendingCore)useCoreAtSlot(nearest);else buildTower(nearest,state.previewBuild.element);return;}
+    state.selectedTower=null;state.pendingBuildSlot=nearest;
+    if(state.pendingCore){state.previewBuild={slot:nearest,element:state.pendingCore.element,core:state.pendingCore};ui.hint.textContent=`预览${ELEMENTS[state.pendingCore.element].name}塔：再次点击阵位确认`;}
+    else{state.previewBuild=null;state.buildElement=null;ui.cards.forEach(card=>card.classList.remove("selected"));ui.hint.textContent="阵位已选：从下方选择元素塔";}
+    updateUI();
   });
 
   ui.cards.forEach(card=>card.addEventListener("click",()=>{
     if(card.dataset.element!==state.initialElement)return;
+    if(state.pendingBuildSlot===null){showToast("请先点击一个空阵位");return;}
     state.buildElement=card.dataset.element;state.selectedTower=null;
     state.pendingCore=null;renderInventory();
+    state.previewBuild={slot:state.pendingBuildSlot,element:state.buildElement,core:null};
     ui.cards.forEach(c=>c.classList.toggle("selected",c===card));
-    ui.hint.textContent=`已选${ELEMENTS[state.buildElement].name}塔，点击空阵位放置`;updateUI();
+    ui.hint.textContent=`${ELEMENTS[state.buildElement].name}塔预览中，再次点击阵位确认`;updateUI();
   }));
+  ui.waveMini.addEventListener("click",()=>setWaveDrawer(!state.waveDrawerOpen));
+  ui.waveClose.addEventListener("click",()=>setWaveDrawer(false));
   ui.waveButton.addEventListener("click",startWave);
   ui.pause.addEventListener("click",()=>{state.paused=!state.paused;audio.setPaused(state.paused);ui.pause.textContent=state.paused?"▶":"Ⅱ";ui.pause.setAttribute("aria-label",state.paused?"继续":"暂停");});
   ui.restart.addEventListener("click",()=>{menu.mapId=state.mapId;menu.mode=state.runMode;menu.element=state.initialElement;reset();});
@@ -911,6 +972,7 @@
   document.querySelectorAll("[data-mode]").forEach(button=>button.addEventListener("click",()=>{menu.mode=button.dataset.mode;renderMenu();}));
   ui.sell.addEventListener("click",()=>{const t=state.selectedTower;if(!t)return;state.gold+=Math.floor(t.invested*.65);state.towers=state.towers.filter(x=>x!==t);state.selectedTower=null;updateSynergy();updateUI();});
   ui.upgrade.addEventListener("click",()=>{const t=state.selectedTower;if(!t||t.level>=3)return;const cost=45+t.level*30;if(state.gold<cost)return;state.gold-=cost;const previousMax=t.maxHp;t.level++;t.maxHp=towerMaxHp(t);t.hp+=t.maxHp-previousMax;t.invested+=cost;const form=towerForm(t);showToast(`${form.name}升至${["壹","贰","叁"][t.level-1]}阶，攻速与生命提升`);updateUI();});
+  ui.skill.addEventListener("click",()=>{ui.selection.classList.toggle("skill-open");ui.skill.setAttribute("aria-pressed",String(ui.selection.classList.contains("skill-open")));});
   ui.repair.addEventListener("click",()=>{const t=state.selectedTower;if(!t||state.waveActive||t.hp>=t.maxHp)return;const cost=20+t.level*12+(t.secondary?10:0);if(state.gold<cost)return;state.gold-=cost;t.hp=t.maxHp;t.brokenUntil=0;showToast(`${towerForm(t).name}已修复`);updateUI();});
   ui.originChoices.forEach(button=>button.addEventListener("click",()=>chooseOrigin(button.dataset.element)));
   ui.stashLoot.addEventListener("click",()=>{
