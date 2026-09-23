@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>五行 Boss · 模型预览</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#112b30;color:#f6e6b7;font:14px system-ui}canvas{display:block;touch-action:none}header{position:fixed;top:16px;left:20px;pointer-events:none}h1{font-size:24px;margin:0}a{position:fixed;right:20px;top:20px;color:#f6e6b7}fieldset{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:20px;align-items:center;max-width:calc(100% - 24px);margin:0;padding:12px 18px;border:1px solid #8c845e;border-radius:8px;background:#16363aeb;white-space:nowrap}label{display:flex;align-items:center;gap:6px;min-height:28px}input{accent-color:#dbbf68}label:last-child input{width:90px}@media(max-width:540px){fieldset{gap:8px;padding:8px;font-size:12px}label:last-child input{width:56px}h1{font-size:20px}}
+</style>
+<style>header{pointer-events:auto}select{margin-top:8px;background:#16363a;color:#f6e6b7;border:1px solid #8c845e;border-radius:4px;padding:8px;font:inherit;max-width:180px}select:focus-visible{outline:2px solid #dbbf68}</style>
+<header><h1>金王</h1><select id="boss-kind" aria-label="选择 Boss"><option value="metal">金王</option><option value="wood">木王 · 缚生古君</option><option value="water">水王 · 沧澜君</option><option value="fire">火王 · 烬火君</option><option value="earth">土王 · 镇岳君</option><option value="all">五王群像</option></select></header><a href="./index.html">返回游戏</a>
+<fieldset aria-label="模型状态"><label><input id="walk" type="checkbox" checked>行走</label><label><input id="shield" type="checkbox" checked>护盾</label><label><input id="casting" type="checkbox">施法</label><label>缩放<input id="zoom" type="range" min=".8" max="1.5" step=".01" value="1" aria-label="缩放"></label></fieldset>
+<script type="module">
+import * as THREE from './assets/three.module.js';
+import {createBoss,animateBoss} from './enemy-models.js';
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x112b30);
+const camera=new THREE.PerspectiveCamera(33,1,.1,30);
+scene.add(new THREE.HemisphereLight(0xe5f5ff,0x25332c,2));
+const sun=new THREE.DirectionalLight(0xffe8bc,3.5);sun.position.set(-3,6,4);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);scene.add(sun);
+const rim=new THREE.DirectionalLight(0x6cc7ee,2);rim.position.set(3,3,-3);scene.add(rim);
+const kinds=['metal','wood','water','fire','earth'];
+const names={metal:'金王',wood:'缚生古君',water:'沧澜君',fire:'烬火君',earth:'镇岳君',all:'五行诸王'};
+const selector=document.querySelector('#boss-kind');
+const requested=new URLSearchParams(location.search).get('boss');selector.value=names[requested]?requested:'metal';
+let models=[];
+function chooseBoss(){
+ for(const model of models){scene.remove(model);const geometries=new Set(),materials=new Set();model.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());}
+ const active=selector.value==='all'?kinds:[selector.value];
+ models=active.map((kind,i)=>{const model=createBoss(kind);model.userData.kind=kind;model.position.x=active.length>1?(i-2)*2.65:0;scene.add(model);return model;});
+ document.querySelector('h1').textContent=names[selector.value];floor.scale.x=active.length>1?4.1:1;
+}
+const floor=new THREE.Mesh(new THREE.CylinderGeometry(1.65,1.8,.14,64),new THREE.MeshStandardMaterial({color:0x28464b,roughness:.8,metalness:.3}));floor.position.y=-.06;floor.receiveShadow=true;scene.add(floor);
+selector.addEventListener('change',chooseBoss);chooseBoss();
+const walk=document.querySelector('#walk'),shield=document.querySelector('#shield'),casting=document.querySelector('#casting'),zoom=document.querySelector('#zoom');
+let azimuth=.45,tilt=.28,lastPointer=null;
+renderer.domElement.addEventListener('pointerdown',e=>{lastPointer={x:e.clientX,y:e.clientY};renderer.domElement.setPointerCapture(e.pointerId);});
+renderer.domElement.addEventListener('pointermove',e=>{if(!lastPointer)return;azimuth-=(e.clientX-lastPointer.x)*.008;tilt=Math.max(.05,Math.min(.9,tilt+(e.clientY-lastPointer.y)*.005));lastPointer={x:e.clientX,y:e.clientY};});
+renderer.domElement.addEventListener('lostpointercapture',()=>lastPointer=null);
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);}
+addEventListener('resize',resize);resize();
+const clock=new THREE.Clock();let time=0;
+function frame(){requestAnimationFrame(frame);const delta=Math.min(.1,clock.getDelta());time+=delta;
+ const distance=Math.max(7.2,(selector.value==='all'?31:5.3)/camera.aspect)/Number(zoom.value);
+ camera.position.set(Math.sin(azimuth)*Math.cos(tilt)*distance,1.1+Math.sin(tilt)*distance,Math.cos(azimuth)*Math.cos(tilt)*distance);camera.lookAt(0,1.1,0);
+ for(const model of models)animateBoss(model,{element:model.userData.kind,hp:1800,shield:shield.checked?400:0,casting:casting.checked},time,delta,walk.checked);
+ renderer.render(scene,camera);
+}frame();
+</script>
+</html>

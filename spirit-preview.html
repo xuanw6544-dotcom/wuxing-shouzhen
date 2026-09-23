@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>五行灵体 · 普通小怪预览</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#12282d;color:#f2e6bc;font:14px system-ui}canvas{display:block;touch-action:none}header{position:fixed;top:16px;left:20px}h1{font-size:22px;margin:0 0 8px}select{font:inherit;color:inherit;background:#203a3e;border:1px solid #9a9875;border-radius:4px;padding:8px}a{position:fixed;right:20px;top:22px;color:#f2e6bc}footer{position:fixed;bottom:max(16px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);max-width:calc(100% - 20px);display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:10px 14px;background:#16363aee;border:1px solid #8a8764;border-radius:8px;align-items:center}fieldset{display:flex;gap:4px;border:0;padding:0;margin:0}label{display:flex;align-items:center;gap:5px;white-space:nowrap;min-height:32px}fieldset label{padding:4px 9px;border-radius:4px}fieldset label:has(input:checked){background:#486465}input{accent-color:#dbbf68}input[type=range]{width:84px}fieldset input{position:absolute;opacity:0}fieldset label:has(input:focus-visible){outline:2px solid #e7d48d}@media(max-width:550px){h1{font-size:18px}footer{width:calc(100% - 20px);gap:8px;padding:8px;font-size:12px}header{left:12px;top:12px}a{right:12px;top:18px}input[type=range]{width:60px}}
+</style>
+<header><h1>五行灵体</h1><select id="element" aria-label="元素"><option value="all">五行同览</option><option value="metal">金 · 锋晶</option><option value="wood">木 · 芽灵</option><option value="water">水 · 涓魄</option><option value="fire">火 · 焰心</option><option value="earth">土 · 岩核</option></select></header>
+<a href="./index.html">返回游戏</a>
+<footer><fieldset aria-label="预览模式"><label><input type="radio" name="mode" value="gallery" checked>单体近景</label><label><input type="radio" name="mode" value="march">成群行进</label></fieldset><label><input id="motion" type="checkbox" checked>动态</label><label>缩放<input id="zoom" type="range" min=".75" max="1.5" step=".01" value="1"></label></footer>
+<script type="module" src="./spirit-preview.js"></script>
+</html>

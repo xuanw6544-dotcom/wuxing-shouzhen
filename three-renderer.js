@@ -1,5 +1,12 @@
 import * as THREE from "./assets/three.module.js";
-import {surface,island,landscape,towerDetails,fusionDetails} from './environment-3d.js';
+import {surface,island,landscape} from './environment-3d.js';
+import {createBoss,animateBoss} from './enemy-models.js';
+import {createElite,animateElite} from './elite-models.js';
+import {createSpirit,animateSpirit} from './spirit-models.js';
+import {createFireTower,animateFireTower} from './fire-tower-model.js';
+import {createWaterTower,animateWaterTower} from './water-tower-model.js';
+import {createNatureTower,animateNatureTower} from './nature-tower-models.js';
+import {createFusionTower,animateFusionTower} from './fusion-tower-models.js';
 
 // Visual-only renderer: game.js remains the authority for movement, combat and input.
 const host = document.querySelector(".battlefield");
@@ -38,6 +45,8 @@ const projectileGroup = new THREE.Group();
 scene.add(mapGroup, towerGroup, enemyGroup, projectileGroup);
 const towerMeshes = new Map();
 const enemyMeshes = new Map();
+const retiringEnemies = new Map();
+let lastEnemyTime = 0;
 const shotMeshes = new Map();
 const effectMeshes = new Map();
 const pads = [];
@@ -138,34 +147,19 @@ function buildMap(map) {
 }
 
 function buildTower(tower) {
-  const kind = tower.element;
-  const group = new THREE.Group();
-  const levelScale = 1;
-  const base = new THREE.Mesh(new THREE.CylinderGeometry(.62*levelScale,.82*levelScale,.32*levelScale,8), material("earth"));
-  base.castShadow = true; base.receiveShadow = true; group.add(base);
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(.36*levelScale,.48*levelScale,1.05*levelScale,6), material(kind));
-  body.position.y = .65*levelScale; body.castShadow = true; group.add(body);
-  const core = new THREE.Mesh(new THREE.OctahedronGeometry(.35*levelScale, 0), material(kind, true));
-  core.position.y = 1.38*levelScale; core.castShadow = true; group.add(core);
-  if(kind==='metal')core.scale.set(.6,1.8,.6);
-  if(kind==='earth')core.scale.set(1.3,1.4,1.1);
-  if(kind==='fire')core.scale.set(.8,1.6,.8);
-  if(kind==='wood')for(let i=0;i<5;i++){
-    const leaf=new THREE.Mesh(sharedBall,material(kind));leaf.scale.set(.38,.13,.2);leaf.position.set(Math.cos(i*2.4)*.4,.6+i*.16,Math.sin(i*2.4)*.4);leaf.rotation.z=i*.7;group.add(leaf);
-  }
-  if(kind==='water')for(let i=0;i<2;i++){
-    const hoop=new THREE.Mesh(new THREE.TorusGeometry(.5+i*.13,.035,8,40),material(kind,true));hoop.rotation.x=1+i*.4;hoop.position.y=.9+i*.3;group.add(hoop);
-  }
-  const aura = new THREE.Mesh(new THREE.TorusGeometry(.66*levelScale,.025,6,32), new THREE.MeshBasicMaterial({ color: elementColors[kind], transparent: true, opacity: .75 }));
-  aura.rotation.x = Math.PI/2; aura.position.y = .2; group.add(aura);
-  const [x,y] = window.WuxingGame.getMap().slots[tower.slot] || [.5,.5];
-  group.position.copy(worldPosition(x,y,.7 + (tower.slot % 3 === 0 ? .22 : 0)));
-  group.userData.tower = tower; group.userData.phase = tower.slot * .7;
+  const kind=tower.element;
+  const group=tower.secondary
+    ? createFusionTower(window.WuxingGame.getTowerForm(tower).kind)
+    : kind==='fire'?createFireTower(tower.level)
+    : kind==='water'?createWaterTower(tower.level):createNatureTower(kind,tower.level);
+  group.userData.tower=tower;
   group.userData.signature=`${tower.element}:${tower.secondary}:${tower.level}`;
-  // Replace temporary pedestal materials before assigning the detailed set.
-  const form=window.WuxingGame.getTowerForm(tower);
-  group.userData.moving=tower.secondary?fusionDetails(group,form.kind,tower.level,material,sharedBall):towerDetails(group,kind,tower.level,material,sharedBall);
-  const bar=new THREE.Mesh(healthGeometry,healthMaterial);bar.position.y=2;bar.renderOrder=5;group.add(bar);group.userData.bar=bar;
+  group.userData.moving=[];
+  const [x,y]=window.WuxingGame.getMap().slots[tower.slot]||[.5,.5];
+  group.position.copy(worldPosition(x,y,.7+(tower.slot%3===0?.22:0)));
+  const bar=new THREE.Mesh(healthGeometry,healthMaterial);
+  bar.position.y=group.userData.healthHeight;bar.renderOrder=5;
+  group.add(bar);group.userData.bar=bar;
   return group;
 }
 
@@ -180,8 +174,14 @@ function syncTowers() {
     mesh.position.copy(worldPosition(x,y,.7 + (tower.slot % 3 === 0 ? .22 : 0)));
     const scale = [1,1.22,1.42][tower.level-1];
     mesh.scale.setScalar(scale * (tower.hp <= 0 ? .72 : 1));
-    mesh.children[2].rotation.y = state.time*.7;
-    mesh.children[2].position.y=1.38+Math.sin(state.time*2+tower.slot)*.06;
+    if(mesh.userData.fireVisual)animateFireTower(mesh,state.time);
+    else if(mesh.userData.waterVisual)animateWaterTower(mesh,state.time);
+    else if(mesh.userData.natureVisual)animateNatureTower(mesh,state.time);
+    else if(mesh.userData.fusionVisual)animateFusionTower(mesh,state.time);
+    else{
+      mesh.children[2].rotation.y = state.time*.7;
+      mesh.children[2].position.y=1.38+Math.sin(state.time*2+tower.slot)*.06;
+    }
     mesh.userData.bar.quaternion.copy(camera.quaternion);
     mesh.userData.bar.scale.x=Math.max(.001,tower.hp/tower.maxHp);
     mesh.userData.moving.forEach(({mesh:m,y,phase})=>{m.position.y=y+Math.sin(state.time*1.8+phase)*.055;m.rotation.y=state.time*.3+phase;});
@@ -195,15 +195,42 @@ function syncTowers() {
 
 function syncEnemies() {
   const state = window.WuxingGame.state;
+  const reset=state.time<lastEnemyTime;
+  const delta=Math.max(0,Math.min(.1,state.time-lastEnemyTime));lastEnemyTime=state.time;
   const live=new Set(state.enemies);
-  for(const [enemy,mesh] of enemyMeshes)if(!live.has(enemy)){enemyGroup.remove(mesh);enemyMeshes.delete(enemy);}
+  for(const [enemy,mesh] of enemyMeshes)if(!live.has(enemy)){
+    enemyMeshes.delete(enemy);
+    if(mesh.userData.model&&enemy.dead){mesh.userData.bar.visible=false;retiringEnemies.set(mesh,0);}
+    else{enemyGroup.remove(mesh);disposeTree(mesh);}
+  }
+  for(const [mesh,age] of retiringEnemies){
+    const next=age+delta;
+    if(next>.45||reset){enemyGroup.remove(mesh);disposeTree(mesh);retiringEnemies.delete(mesh);}
+    else{retiringEnemies.set(mesh,next);mesh.scale.setScalar(1-next/.45);mesh.rotation.z=next*.7;}
+  }
   state.enemies.forEach(enemy => {
     const nx = enemy.x / Math.max(1,state.width), ny = enemy.y / Math.max(1,state.height);
-    const color = elementColors[enemy.element] || 0xd9d0b5;
     let mesh=enemyMeshes.get(enemy);
-    if(!mesh){mesh=new THREE.Mesh(sharedBall,material(enemy.element));mesh.scale.setScalar(enemy.boss?.65:enemy.elite?.4:.26);const bar=new THREE.Mesh(healthGeometry,healthMaterial);bar.position.y=1.7;bar.renderOrder=5;mesh.add(bar);enemyMeshes.set(enemy,mesh);enemyGroup.add(mesh);}
-    mesh.children[0].quaternion.copy(camera.quaternion);mesh.children[0].scale.x=Math.max(.001,enemy.hp/enemy.maxHp);
-    mesh.position.copy(worldPosition(nx,ny,.72)); mesh.castShadow = true; enemyGroup.add(mesh);
+    if(!mesh){
+      mesh=enemy.boss?createBoss(enemy.element):enemy.elite?createElite(enemy.element):createSpirit(enemy.element);
+      const bar=new THREE.Mesh(healthGeometry,healthMaterial);bar.position.y=mesh.userData.healthHeight||1.7;bar.renderOrder=5;
+      mesh.add(bar);mesh.userData.bar=bar;enemyMeshes.set(enemy,mesh);enemyGroup.add(mesh);
+    }
+    const p=worldPosition(nx,ny,mesh.userData.model ? .36 : .72);
+    if(mesh.userData.model){
+      const previous=mesh.userData.previousPosition;
+      const moving=previous&&p.distanceToSquared(previous)>.000001;
+      // Keep the face readable while leaning toward the direction of travel.
+      const target=moving?Math.atan2(p.x-previous.x,p.z-previous.z)*.22:mesh.rotation.y;
+      mesh.rotation.y+=(target-mesh.rotation.y)*Math.min(1,delta*6);
+      if(mesh.userData.eliteVisual)animateElite(mesh,enemy,state.time,delta,moving);
+      else if(mesh.userData.parts&&mesh.userData.model.endsWith('-spirit'))animateSpirit(mesh,state.time,enemy.routeIndex||0);
+      else animateBoss(mesh,enemy,state.time,delta,moving);
+      mesh.userData.previousPosition=p.clone();
+    }
+    mesh.position.copy(p);mesh.castShadow=true;
+    mesh.userData.bar.quaternion.copy(mesh.quaternion.clone().invert().multiply(camera.quaternion));
+    mesh.userData.bar.scale.x=Math.max(.001,enemy.hp/enemy.maxHp);
   });
   const shots=new Set(state.projectiles);
   for(const [p,m] of shotMeshes)if(!shots.has(p)){projectileGroup.remove(m);shotMeshes.delete(p);}
@@ -247,7 +274,9 @@ window.Wuxing3D={active:new URLSearchParams(location.search).get('renderer')!=='
     const hits=raycaster.intersectObjects([...pads,...towerGroup.children],true);let slot=null;
     for(const hit of hits){let o=hit.object;while(o&&slot===null){if(o.userData.slot!==undefined)slot=o.userData.slot;else if(o.userData.tower)slot=o.userData.tower.slot;o=o.parent;}if(slot!==null)break;}
     if(slot===null)return {x:-10000,y:-10000};const [nx,ny]=window.WuxingGame.getMap().slots[slot];return {x:nx*window.WuxingGame.state.width,y:ny*window.WuxingGame.state.height};},
-  stats:()=>({...renderer.info.memory,calls:renderer.info.render.calls})};
+  stats:()=>({...renderer.info.memory,calls:renderer.info.render.calls,
+    towerModels:[...towerMeshes.values()].map(mesh=>mesh.name),
+    enemyModels:[...enemyMeshes.values()].map(mesh=>mesh.userData.model||mesh.name)})};
 canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();window.Wuxing3D.active=false;document.body.classList.remove('three-ready');});
 if(window.Wuxing3D.active)
 document.body.classList.add("three-ready");
