@@ -92,10 +92,33 @@ async function main() {
       await page.keyboard.press('Escape');
       const canvas = page.locator('#game-canvas');
       const box = await canvas.boundingBox();
-      for (const [x,y] of [[.09,.47],[.28,.47],[.5,.58]]) {
+      assert(await page.locator('#selection-panel').isHidden(),'tower controls stay hidden by default');
+      assert(await page.locator('#wave-drawer').isHidden(),'wave details stay collapsed by default');
+      await page.waitForTimeout(1900);
+      if(width===1280) await page.screenshot({ path: path.join(output, 'context-default-1280.png') });
+      await page.mouse.click(box.x+.09*box.width,box.y+.47*box.height);
+      assert(await page.locator('.command-panel').evaluate(el=>el.classList.contains('build-mode')),'empty slot focuses the candidate dock');
+      if(width===1280) await page.screenshot({ path: path.join(output, 'context-empty-slot-1280.png') });
+      await page.locator('.tower-card.water').click();
+      await page.mouse.click(box.x+.09*box.width,box.y+.47*box.height);
+      await page.mouse.click(box.x+.09*box.width,box.y+.47*box.height);
+      assert(await page.locator('#selection-panel').isVisible(),'existing tower reveals contextual actions');
+      if(await page.locator('#wave-drawer').isVisible()) await page.locator('#wave-close-button').click();
+      await page.mouse.move(box.x+.5*box.width,20);
+      await page.waitForTimeout(260);
+      if(width===1280) await page.screenshot({ path: path.join(output, 'context-existing-tower-1280.png') });
+      await page.mouse.click(box.x+.98*box.width,box.y+.95*box.height);
+      if(await page.locator('#wave-drawer').isHidden()) await page.locator('#wave-mini-card').click();
+      assert(await page.locator('#wave-drawer').isVisible(),'wave card expands its detail drawer');
+      await page.waitForTimeout(220);
+      if(width===1280) await page.screenshot({ path: path.join(output, 'context-wave-drawer-1280.png') });
+      await page.locator('#wave-close-button').click();
+      for (const [x,y] of [[.28,.47],[.5,.58]]) {
+        await page.mouse.click(box.x+x*box.width, box.y+y*box.height);
         await page.locator('.tower-card.water').click();
         await page.mouse.click(box.x+x*box.width, box.y+y*box.height);
       }
+      if(await page.locator('#wave-drawer').isHidden()) await page.locator('#wave-mini-card').click();
       await page.locator('#wave-button').click();
       await page.waitForTimeout(4500);
       await page.screenshot({ path: path.join(output, `battle-${width}.png`), fullPage: true });

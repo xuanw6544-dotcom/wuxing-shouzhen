@@ -88,22 +88,39 @@
 
       <section class="command-panel" hidden>
         <div class="battle-hud">
-          <div id="wave-forecast" class="wave-forecast" aria-live="polite"></div>
-          <div class="status-row">
-            <div class="threat">
-              <span>本波主属性</span>
-              <strong id="threat-value"><i class="element-dot fire"></i>火</strong>
+          <button id="wave-mini-card" class="wave-mini-card" type="button" aria-expanded="false" aria-controls="wave-drawer">
+            <span class="wave-mark" aria-hidden="true">⚔</span>
+            <strong id="wave-mini-number">Wave 1</strong>
+            <span class="wave-timer"><span aria-hidden="true">⌛</span><b id="wave-countdown">12s</b></span>
+            <i id="wave-mini-element" class="wave-element fire" aria-label="火元素">火</i>
+          </button>
+          <div id="wave-drawer" class="wave-drawer" hidden>
+            <div class="wave-drawer-heading"><strong id="wave-drawer-title">Wave 1</strong><button id="wave-close-button" type="button" aria-label="收起波次详情" title="收起">×</button></div>
+            <div id="wave-forecast" class="wave-forecast" aria-live="polite"></div>
+            <div class="status-row">
+              <div class="threat">
+                <span>主属性</span>
+                <strong id="threat-value"><i class="element-dot fire"></i>火</strong>
+              </div>
+              <button id="wave-button" class="primary-button" type="button">开始第 1 波</button>
             </div>
-            <button id="wave-button" class="primary-button" type="button">开始第 1 波</button>
           </div>
         </div>
 
-        <div id="selection-panel" class="selection-panel hidden">
-          <div>
+        <div id="selection-panel" class="selection-panel tower-bottom-sheet hidden">
+          <div id="selected-avatar" class="selected-avatar" aria-hidden="true"></div>
+          <div class="tower-sheet-copy">
             <strong id="selected-name">水塔 · 壹阶</strong>
-            <span id="selected-detail">克火 · 减速</span>
+            <div class="tower-stats">
+              <span>攻击 <b id="selected-attack">21</b></span>
+              <span>攻速 <b id="selected-speed">1.05s</b></span>
+              <span>DPS <b id="selected-dps">20</b></span>
+              <span>生命 <b id="selected-health">100/100</b></span>
+            </div>
+            <span id="selected-detail" class="tower-skill-detail">克火 · 减速</span>
           </div>
           <div class="selection-actions">
+            <button id="skill-button" class="text-button" type="button">技能</button>
             <button id="sell-button" class="text-button" type="button">出售 +30</button>
             <button id="repair-button" class="text-button hidden" type="button">修复 30</button>
             <button id="upgrade-button" class="primary-button compact" type="button">升级 70</button>
@@ -111,7 +128,7 @@
         </div>
 
         <div class="bottom-dock">
-          <div class="tower-tray" aria-label="五行防御塔">
+          <div class="tower-tray" aria-label="本命元素塔候选">
             <button class="tower-card metal" data-element="metal" type="button">
               <span class="tower-glyph">金</span><strong>金锋</strong><small>50 · 穿透</small>
             </button>
@@ -128,8 +145,8 @@
               <span class="tower-glyph">土</span><strong>厚土</strong><small>50 · 重击</small>
             </button>
           </div>
-          <div class="inventory-row">
-            <span>元素仓库 · 6</span>
+          <div class="inventory-row" aria-label="元素核心候选">
+            <span>元素仓库</span>
             <div id="element-inventory" class="element-inventory">
               <i>空</i><i>空</i><i>空</i><i>空</i><i>空</i><i>空</i>
             </div>
