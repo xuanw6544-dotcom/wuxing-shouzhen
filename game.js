@@ -67,6 +67,10 @@
   Object.assign(ui, {
     home: document.getElementById("home-screen"), homeButton: document.getElementById("home-button"),
     enter: document.getElementById("enter-button"), resume: document.getElementById("resume-button"),
+    openMenu: document.getElementById("open-menu-button"), landingStep: document.getElementById("landing-step"),
+    mapStep: document.getElementById("map-step"), originStep: document.getElementById("origin-step"),
+    mapBack: document.getElementById("map-back-button"), mapNext: document.getElementById("map-next-button"),
+    originBack: document.getElementById("origin-back-button"),
     mapChoices: document.getElementById("map-choices"), mapRecord: document.getElementById("map-record"),
     originName: document.getElementById("home-origin-name"), trialLabel: document.getElementById("home-trial-label"),
     forecast: document.getElementById("wave-forecast"), battlefield: document.querySelector(".battlefield"),
@@ -100,14 +104,21 @@
     if(record&&Array.isArray(record.formation)&&record.formation.length){const formation=document.createElement("small");formation.textContent=`留阵：${record.formation.map(t=>`${String(t.name)}${Number(t.level)||1}阶`).join("、")}`;ui.mapRecord.appendChild(formation);}
     ui.resume.hidden=!state.initialElement||state.result;
   }
+  function showMenuStep(step="landing") {
+    ui.landingStep.hidden=step!=="landing";
+    ui.mapStep.hidden=step!=="map";
+    ui.originStep.hidden=step!=="origin";
+    document.body.dataset.menuStep=step;
+    renderMenu();
+  }
   function showHome() {
     saveRecord();state.scene="menu";state.paused=true;hideSkillTooltip();
     ui.home.hidden=false;ui.battlefield.hidden=true;ui.commands.hidden=true;ui.homeButton.hidden=true;
-    document.body.classList.add("at-home");audio.setPaused(false);renderMenu();ui.waveLabel.textContent="山海有灵 · 五行成阵";
+    document.body.classList.add("at-home");document.body.classList.remove("in-battle");audio.setPaused(false);showMenuStep("landing");ui.waveLabel.textContent="山海有灵 · 五行成阵";
   }
   function showBattle() {
     state.scene="battle";state.paused=false;ui.home.hidden=true;ui.battlefield.hidden=false;ui.commands.hidden=false;ui.homeButton.hidden=false;
-    document.body.classList.remove("at-home");ui.mapName.textContent=MAP.name;ui.modeName.textContent=state.runMode==="trial"?"定序试炼·壹":"无尽守境";
+    document.body.classList.remove("at-home");document.body.classList.add("in-battle");ui.mapName.textContent=MAP.name;ui.modeName.textContent=state.runMode==="trial"?"定序试炼·壹":"无尽守境";
     ui.pause.textContent="Ⅱ";ui.pause.setAttribute("aria-label","暂停");audio.setPaused(false);hideSkillTooltip();resize();updateUI();
   }
   function buildMenu() {
@@ -888,6 +899,10 @@
   ui.restart.addEventListener("click",()=>{menu.mapId=state.mapId;menu.mode=state.runMode;menu.element=state.initialElement;reset();});
   ui.homeButton.addEventListener("click",showHome);
   ui.resultHome.addEventListener("click",showHome);
+  ui.openMenu.addEventListener("click",()=>showMenuStep("map"));
+  ui.mapBack.addEventListener("click",()=>showMenuStep("landing"));
+  ui.mapNext.addEventListener("click",()=>showMenuStep("origin"));
+  ui.originBack.addEventListener("click",()=>showMenuStep("map"));
   ui.resume.addEventListener("click",()=>{showBattle();window.scrollTo({top:0,behavior:"instant"});});
   ui.enter.addEventListener("click",()=>{
     if(state.initialElement&&!state.result&&!window.confirm("开始新的挑战将结束当前守阵，战绩会保留。继续入阵？"))return;

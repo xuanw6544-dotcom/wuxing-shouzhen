@@ -26,7 +26,7 @@ for(let i=0;i<100;i++)assert.equal(a(),b());
 (async()=>{
   const browser=await chromium.launch({executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',headless:true,args:['--disable-gpu']});
   try {
-    const page=await browser.newPage({viewport:{width:1280,height:980}});
+    const page=await browser.newPage({viewport:{width:1280,height:720}});
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.route('http://wuxing.test/**',route=>{
       const name=new URL(route.request().url()).pathname.slice(1)||'index.html';
@@ -38,8 +38,10 @@ for(let i=0;i<100;i++)assert.equal(a(),b());
     });
     await page.goto('http://wuxing.test/');
     for(const id of Object.keys(world.maps)) {
+      await page.locator('#open-menu-button').click();
       await page.locator(`[data-map="${id}"]`).click();
       await page.locator('[data-mode="trial"]').click();
+      await page.locator('#map-next-button').click();
       page.once('dialog',d=>d.accept());
       await page.locator('#enter-button').click();
       assert.equal(await page.locator('#field-map-name').textContent(),world.maps[id].name);
@@ -48,12 +50,12 @@ for(let i=0;i<100;i++)assert.equal(a(),b());
       assert.equal(routes.length,world.maps[id].routes.length);
       await page.evaluate(()=>{__qa.state.paused=false;for(let i=0;i<50;i++)__qa.update(.05);__qa.state.paused=true;});
       await page.screenshot({path:path.join(root,'artifacts',`map-${id}.png`),fullPage:true});
-      for(const width of [390,320]){
-        await page.setViewportSize({width,height:980});
+      for(const [width,height] of [[844,390],[720,360]]){
+        await page.setViewportSize({width,height});
         await page.screenshot({path:path.join(root,'artifacts',`map-${id}-${width}.png`),fullPage:true});
         assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       }
-      await page.setViewportSize({width:1280,height:980});
+      await page.setViewportSize({width:1280,height:720});
       const snapshot=await page.evaluate(()=>({time:__qa.state.time,count:__qa.state.enemies.length}));
       await page.locator('#home-button').click();await page.waitForTimeout(150);
       assert.deepEqual(await page.evaluate(()=>({time:__qa.state.time,count:__qa.state.enemies.length})),snapshot);
@@ -68,7 +70,7 @@ for(let i=0;i<100;i++)assert.equal(a(),b());
     }
     const records=JSON.parse(await page.evaluate(()=>localStorage.getItem('wuxing.records.v1')));
     for(const id of Object.keys(world.maps))assert.equal(records[`${id}:trial`].cleared,7);
-    await page.reload();await page.locator('[data-mode="trial"]').click();
+    await page.reload();await page.locator('#open-menu-button').click();await page.locator('[data-mode="trial"]').click();
     assert.match(await page.locator('#map-record').textContent(),/7/);
     assert.deepEqual(errors,[]);
     console.log('PASS: 180 wave plans, five Boss elements, routes, deterministic drops, map switching, pause/resume, persistent independent records.');
