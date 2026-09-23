@@ -278,8 +278,15 @@
       terrainMap=map.id;
       terrain=document.createElement("canvas");terrain.width=Math.ceil(w*2);terrain.height=Math.ceil(h*2);
       const g=terrain.getContext("2d");g.scale(2,2);
-      const palette=map.theme==="river"?["#285965","#477d7b","#284955"]:map.theme==="ruins"?["#505f58","#717c68","#3c5450"]:["#245451","#3c6556","#243f42"];
+      const palette=map.theme==="river"?["#285965","#477d7b","#284955"]:map.theme==="ruins"?["#505f58","#717c68","#3c5450"]:map.theme==="array"?["#214d59","#60877b","#28454b"]:["#245451","#3c6556","#243f42"];
       const wash=g.createLinearGradient(0,0,w,h);wash.addColorStop(0,palette[0]);wash.addColorStop(.5,palette[1]);wash.addColorStop(1,palette[2]);g.fillStyle=wash;g.fillRect(0,0,w,h);
+      // Layered mountains and cloud banks create a fixed 2.5D depth cue without changing gameplay coordinates.
+      polygon(g,[[-20,h*.38],[w*.12,h*.17],[w*.24,h*.34],[w*.38,h*.12],[w*.52,h*.33],[w*.67,h*.18],[w*.82,h*.35],[w*1.04,h*.13],[w+20,h*.58],[-20,h*.58]],"#9ab7b066",null);
+      polygon(g,[[-20,h*.53],[w*.18,h*.3],[w*.32,h*.48],[w*.48,h*.27],[w*.65,h*.49],[w*.79,h*.32],[w*1.04,h*.48],[w+20,h*.68],[-20,h*.68]],"#779b8c55",null);
+      for(let i=0;i<7;i++){
+        const cx=(i*.19+.04)*w,cy=h*(.15+(i%3)*.08),rx=w*(.11+(i%2)*.035),ry=h*.035;
+        ellipse(g,cx,cy,rx,ry,"#d8e4d044");ellipse(g,cx-rx*.25,cy+ry*.4,rx*.7,ry*.8,"#d8e4d022");
+      }
       let seed=19;const random=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
       function nearRoad(x,y){return map.routes.some(route=>route.slice(1).some((p,i)=>{const a=route[i],dx=(p[0]-a[0])*w,dy=(p[1]-a[1])*h;const t=Math.max(0,Math.min(1,((x-a[0]*w)*dx+(y-a[1]*h)*dy)/(dx*dx+dy*dy)));return Math.hypot(x-a[0]*w-t*dx,y-a[1]*h-t*dy)<w*.046+8;}));}
       for(let i=0;i<850;i++) {const x=random()*w,y=random()*h;g.fillStyle=i%2?"#d2dec009":"#071f2111";g.fillRect(x,y,random()*20+2,1);}
@@ -305,11 +312,13 @@
       const segments=new Set();
       for(const route of map.routes)for(let i=0;i<route.length-1;i++) {
         const a=route[i],b=route[i+1],key=JSON.stringify([a,b]);if(segments.has(key))continue;segments.add(key);
-        line(g,[[a[0]*w,a[1]*h+3],[b[0]*w,b[1]*h+3]],"#173c38",Math.max(31,w*.065));
-        line(g,[[a[0]*w,a[1]*h],[b[0]*w,b[1]*h]],"#768b79",Math.max(27,w*.058));
+        const roadWidth=Math.max(27,w*.058),depth=Math.max(8,w*.018);
+        line(g,[[a[0]*w,a[1]*h+depth+4],[b[0]*w,b[1]*h+depth+4]],"#102d33aa",roadWidth+10);
+        line(g,[[a[0]*w,a[1]*h+depth],[b[0]*w,b[1]*h+depth]],"#294a4b",roadWidth+5);
+        line(g,[[a[0]*w,a[1]*h],[b[0]*w,b[1]*h]],"#768b79",roadWidth);
         line(g,[[a[0]*w,a[1]*h],[b[0]*w,b[1]*h]],"#a0a88a",Math.max(24,w*.051));
         const len=Math.hypot((b[0]-a[0])*w,(b[1]-a[1])*h),n=Math.ceil(len/19),horizontal=a[1]===b[1];
-        for(let j=1;j<n;j++){const x=(a[0]+(b[0]-a[0])*j/n)*w,y=(a[1]+(b[1]-a[1])*j/n)*h,r=Math.max(11,w*.024);line(g,horizontal?[[x,y-r],[x-2,y],[x+1,y+r]]:[[x-r,y],[x,y+1],[x+r,y-1]],"#677e6c",1);}
+        for(let j=1;j<n;j++){const x=(a[0]+(b[0]-a[0])*j/n)*w,y=(a[1]+(b[1]-a[1])*j/n)*h,r=Math.max(11,w*.024);line(g,horizontal?[[x,y-r],[x-2,y],[x+1,y+r]]:[[x-r,y],[x,y+1],[x+r,y-1]],"#677e6c",1);line(g,horizontal?[[x-1,y-roadWidth*.36],[x-1,y+roadWidth*.36]]:[[x-roadWidth*.36,y],[x+roadWidth*.36,y]],"#d6c99855",.8);}
       }
       g.strokeStyle="#c8d4b333";g.lineWidth=1;g.strokeRect(9,9,w-18,h-18);
     }
