@@ -349,6 +349,13 @@ button:focus-visible { outline: 2px solid #ffdf97; outline-offset: 4px; }
 .in-battle .element-inventory { grid-template-columns: repeat(6,48px); gap: 5px; }
 .in-battle .element-inventory i, .in-battle .element-inventory button { width: 48px; height: 54px; border-radius: 7px; background: #203f42df; transition: transform 180ms ease-out, border-color 180ms ease-out, opacity 180ms ease-out; }
 .in-battle .element-inventory button:hover, .in-battle .element-inventory button.selected { transform: translateY(-3px); border-color: currentColor; }
+.core-action-bar { position: absolute; left: 50%; bottom: calc(100% + 8px); display: flex; align-items: center; gap: 9px; min-width: 330px; padding: 7px 8px; transform: translateX(-50%); border: 1px solid #c4a96f99; border-radius: 8px; color: #e5ecdf; background: #17393df2; box-shadow: 0 8px 22px #071d2477; backdrop-filter: blur(9px); animation: core-actions-in 200ms ease-out both; }
+.core-action-bar.hidden { display: none; }
+.core-action-avatar { width: 38px; height: 40px; display: grid; place-items: center; border-right: 1px solid #91a68e55; }
+.core-action-copy { min-width: 112px; display: flex; flex: 1; flex-direction: column; gap: 2px; }
+.core-action-copy strong { color: #f1d89e; font: 700 13px "KaiTi",serif; }
+.core-action-copy span { color: #aebfb1; font-size: 9px; }
+.core-cancel-button { width: 27px; min-width: 27px; height: 27px; padding: 0; font-size: 18px; }
 .in-battle .hint { position: absolute; left: 50%; bottom: calc(100% + 6px); width: max-content; max-width: 520px; padding: 5px 10px; transform: translate(-50%,8px); border: 1px solid #ac986d77; border-radius: 4px; color: #f1e5bd; background: #183a3de8; opacity: 0; pointer-events: none; transition: transform 200ms ease-out, opacity 180ms ease-out; }
 .in-battle .command-panel.build-mode .bottom-dock { transform: translateX(-50%) scale(1.035); border-color: #e0c681; }
 .in-battle .command-panel.build-mode .hint { transform: translate(-50%,0); opacity: 1; }
@@ -369,6 +376,7 @@ button:focus-visible { outline: 2px solid #ffdf97; outline-offset: 4px; }
 @keyframes drawer-in { from { opacity: 0; transform: scale(.94) translateY(-5px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes sheet-in { from { opacity: 0; transform: translate(-50%,18px) scale(.97); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
 @keyframes dock-in { from { opacity: .35; } to { opacity: 1; } }
+@keyframes core-actions-in { from { opacity: 0; transform: translate(-50%,8px) scale(.97); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
 @keyframes wave-ready { 0%,100% { box-shadow: 0 6px 18px #071f2555; } 50% { box-shadow: 0 6px 20px #d8b96766; } }
 
 @media (orientation: landscape) and (max-width: 900px) {
@@ -382,6 +390,7 @@ button:focus-visible { outline: 2px solid #ffdf97; outline-offset: 4px; }
   .in-battle .tower-card .element-art { width: 34px; height: 37px; }
   .in-battle .element-inventory { grid-template-columns: repeat(6,38px); gap: 3px; }
   .in-battle .element-inventory i, .in-battle .element-inventory button { width: 38px; height: 46px; }
+  .core-action-bar { min-width: 300px; padding: 5px 6px; }
   .in-battle .tower-bottom-sheet { bottom: 5px; min-height: 88px; grid-template-columns: 58px minmax(0,1fr) auto; padding: 7px 9px; }
   .selected-avatar { width: 54px; height: 65px; }
   .selected-art { width: 52px; height: 60px; }
