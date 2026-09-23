@@ -403,8 +403,16 @@
     state.buildElement = null;
     state.pendingBuildSlot = null;
     state.previewBuild = null;
+    hideSkillTooltip();
+    positionSelectionPanel(tower);
     ui.cards.forEach(card => card.classList.remove("selected"));
     updateUI();
+  }
+
+  function positionSelectionPanel(tower) {
+    if (!tower || !ui.selection) return;
+    const [x] = MAP.slots[tower.slot] || [.5, .5];
+    ui.selection.dataset.anchor = x < .5 ? "right" : "left";
   }
 
   function towerForm(tower) {
@@ -768,11 +776,17 @@
 
   function drawTowers(w,h) {
     state.towers.forEach(t=>{
+      if(t.hp<=0)return;
+      const [px,py]=MAP.slots[t.slot],form=towerForm(t);
+      art.towerAuraBack(ctx,form.kind,px*w,py*h,Math.max(19,w*.035),state.time,t.level);
+    });
+    state.towers.forEach(t=>{
       const [px,py]=MAP.slots[t.slot],x=px*w,y=py*h,r=Math.max(17,w*.027),form=towerForm(t);
       if (state.selectedTower===t) { ctx.beginPath();ctx.arc(x,y,w*(.18+t.level*.008),0,Math.PI*2);ctx.fillStyle="rgba(237,221,170,.035)";ctx.fill();ctx.strokeStyle="rgba(237,221,170,.25)";ctx.stroke(); }
       if (t.buffed) { ctx.beginPath();ctx.arc(x,y,r+7,0,Math.PI*2);ctx.strokeStyle="#e9cf73";ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]); }
       const kick=t.lastShotAt===undefined?0:Math.max(0,1-(state.time-t.lastShotAt)/.18)*2;
       art.tower(ctx,form.kind,x,y-kick,Math.max(19,w*.035),state.time,t.level,t.hp<=0);
+      if(t.hp>0)art.towerAuraFront(ctx,form.kind,x,y-kick,Math.max(19,w*.035),state.time,t.level);
       ctx.textAlign="center";ctx.font="600 10px Microsoft YaHei";ctx.fillStyle="#112d32dd";ctx.fillRect(x-21,y+r+4,42,14);ctx.fillStyle="#edf5d9";ctx.fillText(`${form.glyph} · ${t.level}`,x,y+r+14);
       ctx.fillStyle="#1b3438";ctx.fillRect(x-17,y+r+20,34,4);ctx.fillStyle=t.hp<=0?"#87978f":"#91d7ad";ctx.fillRect(x-17,y+r+20,34*Math.max(0,t.hp/t.maxHp),4);
       const thirdHit=["bog","mist","lava","steam","mud"].includes(form.kind);
@@ -935,6 +949,7 @@
   ui.cards.forEach(card => art.decorate(card, card.dataset.element));
   canvas.addEventListener("pointermove", event => {
     if (event.pointerType === "touch" || !state.towers.length) return;
+    if (state.selectedTower) { hideSkillTooltip(); return; }
     const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;
     const tower=state.towers.find(item=>{
       const [tx,ty]=MAP.slots[item.slot];return Math.hypot(x-tx*state.width,y-ty*state.height)<Math.max(25,state.width*.04);
@@ -951,6 +966,7 @@
 
   canvas.addEventListener("pointerdown",event=>{
     if (state.result || state.paused) return;
+    hideSkillTooltip();
     const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;
     let nearest=-1,distance=Infinity;
     MAP.slots.forEach((p,i)=>{const d=Math.hypot(x-p[0]*state.width,y-p[1]*state.height);if(d<distance){distance=d;nearest=i;}});
@@ -958,7 +974,7 @@
     const tower=state.towers.find(t=>t.slot===nearest);
     if(tower){if(state.pendingCore)useCoreAtSlot(nearest);else selectTower(tower);return;}
     if(state.previewBuild?.slot===nearest){if(state.pendingCore)useCoreAtSlot(nearest);else buildTower(nearest,state.previewBuild.element);return;}
-    state.selectedTower=null;state.pendingBuildSlot=nearest;
+    state.selectedTower=null;state.pendingBuildSlot=nearest;ui.selection.dataset.anchor="";
     if(state.pendingCore){state.previewBuild={slot:nearest,element:state.pendingCore.element,core:state.pendingCore};ui.hint.textContent=`预览${ELEMENTS[state.pendingCore.element].name}塔：再次点击阵位确认`;}
     else{state.previewBuild=null;state.buildElement=null;ui.cards.forEach(card=>card.classList.remove("selected"));ui.hint.textContent="阵位已选：从下方选择元素塔";}
     updateUI();

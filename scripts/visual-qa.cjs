@@ -10,7 +10,7 @@ async function main() {
   fs.mkdirSync(output, { recursive: true });
   const browser = await chromium.launch({
     executablePath: process.env.BROWSER_PATH || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
-    headless: true, args: ['--disable-gpu']
+    headless: true, args: ['--disable-gpu','--allow-file-access-from-files']
   });
   const errors = [];
   try {
