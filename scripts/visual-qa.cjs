@@ -14,8 +14,8 @@ async function main() {
   });
   const errors = [];
   try {
-    for (const width of [1280, 390, 320]) {
-      const page = await browser.newPage({ viewport: { width, height: 980 }, deviceScaleFactor: 1 });
+    for (const [width,height] of [[1280,720],[844,390],[720,360]]) {
+      const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
       page.on('pageerror', e => errors.push(e.message));
       await page.addInitScript(() => {
         window.__audioQA = { context: null, master: null, analyser: null, tones: 0 };
@@ -31,8 +31,8 @@ async function main() {
         });
       });
       await page.goto(pathToFileURL(path.join(root, 'index.html')).href);
-      await page.locator('.origin-choices .element-art').first().waitFor();
       const homeCanvas=page.locator('#home-canvas');
+      await homeCanvas.waitFor();
       await page.waitForTimeout(100);
       const homePixels=await homeCanvas.evaluate(c=>{
         const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,colors=new Set();
@@ -43,9 +43,20 @@ async function main() {
       const homeFrame=await homeCanvas.screenshot();await page.waitForTimeout(250);
       assert(!homeFrame.equals(await homeCanvas.screenshot()),'home scene animates');
       assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'home fits viewport');
-      await page.screenshot({ path: path.join(output, `origin-${width}.png`), fullPage: true });
+      assert(await page.locator('#map-step').isHidden(),'map setup is not shown on first screen');
+      assert(await page.locator('#origin-step').isHidden(),'origin setup is not shown on first screen');
+      await page.screenshot({ path: path.join(output, `landing-${width}.png`) });
       assert(await page.evaluate(() => [...document.images].every(i => i.complete && i.naturalWidth > 0)), 'portraits must load');
       assert.equal(await page.evaluate(() => window.__audioQA.context), null, 'no autoplay before user gesture');
+      await page.locator('#open-menu-button').click();
+      assert(await page.locator('#map-step').isVisible(),'map setup follows landing');
+      await page.screenshot({ path: path.join(output, `maps-${width}.png`) });
+      await page.locator('#map-next-button').click();
+      await page.locator('.origin-choices .element-art').first().waitFor();
+      assert(await page.locator('#origin-step').isVisible(),'origin setup follows map setup');
+      await page.screenshot({ path: path.join(output, `origin-${width}.png`) });
+      await page.locator('#origin-choices [data-element="water"]').click();
+      await page.locator('#enter-button').click();
       await page.locator('#sound-button').click();
       for (const [name,value] of [['master','62'],['music','18'],['effects','43']]) await page.locator(`#volume-${name}`).fill(value);
       await page.waitForTimeout(400);
@@ -69,13 +80,15 @@ async function main() {
       await page.screenshot({ path: path.join(output, `audio-${width}.png`), fullPage: true });
       assert.equal(JSON.parse(await page.evaluate(() => localStorage.getItem('wuxing.audio.v1'))).effects,43);
       await page.reload();
+      await page.locator('#open-menu-button').click();
+      await page.locator('#map-next-button').click();
+      await page.locator('#origin-choices [data-element="water"]').click();
+      await page.locator('#enter-button').click();
       await page.locator('#sound-button').click();
       assert.equal(await page.locator('#volume-music').inputValue(),'18','music volume persists across reload');
       assert(await page.locator('#sound-muted').isChecked(),'mute persists');
       await page.locator('#sound-muted').uncheck();
       await page.keyboard.press('Escape');
-      await page.locator('#origin-choices [data-element="water"]').click();
-      await page.locator('#enter-button').click();
       const canvas = page.locator('#game-canvas');
       const box = await canvas.boundingBox();
       for (const [x,y] of [[.09,.47],[.28,.47],[.5,.58]]) {
@@ -101,6 +114,11 @@ async function main() {
       assert.deepEqual(clipped, [], 'buttons must fit their labels');
       await page.close();
     }
+    const portrait=await browser.newPage({viewport:{width:390,height:844}});
+    await portrait.goto(pathToFileURL(path.join(root,'index.html')).href);
+    assert(await portrait.locator('.rotate-notice').isVisible(),'portrait requests landscape orientation');
+    await portrait.screenshot({path:path.join(output,'rotate-390.png')});
+    await portrait.close();
     const sheet = await browser.newPage({ viewport: { width: 1160, height: 1000 } });
     sheet.on('pageerror',e=>errors.push(e.message));
     await sheet.goto(pathToFileURL(path.join(root,'index.html')).href);
@@ -119,7 +137,7 @@ async function main() {
     });
     await sheet.screenshot({ path: path.join(output, 'art-roster.png') });
     assert.deepEqual(errors, [], 'browser errors');
-    console.log('PASS: 1280/390/320 layouts, gameplay, portraits, moving canvas, 15 tower designs, 5 enemy families, audio output, mute and persisted independent volumes.');
+    console.log('PASS: staged landing/map/origin flow, 1280/844/720 landscape layouts, portrait rotation notice, gameplay, moving canvas, audio and persisted volumes.');
   } finally { await browser.close(); }
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

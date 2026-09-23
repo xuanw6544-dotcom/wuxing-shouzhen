@@ -32,17 +32,21 @@
       </header>
 
       <section id="home-screen" class="home-screen" aria-label="山门主页面">
-        <div class="home-hero">
+        <div id="landing-step" class="home-hero home-step">
           <canvas id="home-canvas" class="home-background" role="img" aria-label="云海仙山之间的山门与五行祭坛"></canvas>
           <div class="home-title"><p>山海有灵 · 五行成阵</p><h2>五行守阵</h2></div>
           <div class="hero-seal" aria-hidden="true">无尽<br />守境</div>
+          <div class="landing-actions"><button id="resume-button" class="ghost-button" type="button" hidden>继续守阵</button><button id="open-menu-button" class="primary-button start-button" type="button">叩山门</button></div>
         </div>
-        <div class="home-setup">
-          <div class="home-section-heading"><h3>择境</h3><div class="mode-switch" aria-label="挑战模式"><button type="button" data-mode="endless" aria-pressed="true">无尽守境</button><button type="button" data-mode="trial" aria-pressed="false">定序试炼</button></div></div>
+        <div id="map-step" class="home-setup home-step" hidden>
+          <div class="setup-heading"><div><p>第一步</p><h2>择境入阵</h2></div><div class="mode-switch" aria-label="挑战模式"><button type="button" data-mode="endless" aria-pressed="true">无尽守境</button><button type="button" data-mode="trial" aria-pressed="false">定序试炼</button></div></div>
           <div id="map-choices" class="map-choices" aria-label="选择地图"></div>
           <div id="map-record" class="map-record" aria-live="polite"></div>
+          <div class="step-actions"><button id="map-back-button" class="text-button" type="button">返回山门</button><button id="map-next-button" class="primary-button" type="button">下一步 · 定本命</button></div>
+        </div>
+        <div id="origin-step" class="home-setup home-step origin-step" hidden>
           <div id="origin-panel" class="home-origin">
-            <div class="home-section-heading"><h3>定本命</h3><span id="home-origin-name">金 · 穿透锋锐</span></div>
+            <div class="setup-heading"><div><p>第二步</p><h2>定本命</h2></div><span id="home-origin-name">金 · 穿透锋锐</span></div>
             <div id="origin-choices" class="origin-choices">
               <button data-element="metal" class="metal" type="button" aria-pressed="true"><b>金</b><span>穿透锋锐</span></button>
               <button data-element="wood" class="wood" type="button" aria-pressed="false"><b>木</b><span>缠绕生长</span></button>
@@ -51,9 +55,12 @@
               <button data-element="earth" class="earth" type="button" aria-pressed="false"><b>土</b><span>重击坚守</span></button>
             </div>
           </div>
-          <div class="home-start"><p id="home-trial-label">青岚古阵 · 无尽守境</p><div><button id="resume-button" class="text-button" type="button" hidden>继续守阵</button><button id="enter-button" class="primary-button" type="button">入阵 · 开始挑战</button></div></div>
+          <div class="origin-summary"><span>即将前往</span><strong id="home-trial-label">青岚古阵 · 无尽守境</strong></div>
+          <div class="step-actions"><button id="origin-back-button" class="text-button" type="button">上一步</button><button id="enter-button" class="primary-button" type="button">入阵 · 开始挑战</button></div>
         </div>
       </section>
+
+      <div class="rotate-notice" aria-hidden="true"><span>↻</span><strong>请横屏游玩</strong></div>
 
       <section class="battlefield" aria-label="游戏战场" hidden>
         <canvas id="game-canvas"></canvas>

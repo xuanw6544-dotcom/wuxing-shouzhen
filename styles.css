@@ -186,4 +186,82 @@ button:focus-visible { outline: 2px solid #ffdf97; outline-offset: 4px; }
   .map-choices strong { font-size: 15px; }
   .mode-switch button { padding: 8px; }
 }
+
+/* Horizontal game shell and staged home flow. */
+.rotate-notice { display: none; }
+.at-home { overflow: hidden; display: grid; place-items: center; }
+.at-home .topbar { display: none; }
+.at-home .app-shell { width: min(100vw, calc(100svh * 16 / 9)); height: min(100svh, calc(100vw * 9 / 16)); max-width: none; border: 0; }
+.home-screen, .home-step { width: 100%; height: 100%; }
+.home-screen { position: relative; overflow: hidden; }
+.home-hero { height: 100%; }
+.home-title { top: 7%; left: 4%; }
+.home-title h2 { font-size: clamp(38px, 6.2vw, 76px); }
+.home-title p { font-size: clamp(10px, 1.15vw, 15px); }
+.hero-seal { top: 6%; right: 3%; }
+.landing-actions { position: absolute; left: 50%; bottom: 7%; z-index: 3; display: flex; gap: 10px; transform: translateX(-50%); }
+.start-button { min-width: 156px; min-height: 46px; font: 700 18px "STKaiti", "KaiTi", serif; border-color: #e0c98c; box-shadow: 0 7px 20px #173c3766, inset 0 1px #ffffff2e; }
+.ghost-button { min-width: 112px; border: 1px solid #e2d09d; border-radius: 4px; color: #fff1c9; background: #1d4642d9; }
+.home-setup { height: 100%; padding: clamp(14px, 2.2vw, 28px); display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto; gap: clamp(8px, 1.3vw, 16px); background: linear-gradient(180deg,#dce9e2,#edf1e7); }
+.setup-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; min-height: 52px; }
+.setup-heading p { margin: 0 0 2px; color: #70877b; font-size: 10px; }
+.setup-heading h2 { margin: 0; color: #274b43; font: 700 clamp(24px,3vw,36px) "STKaiti","KaiTi",serif; }
+.setup-heading > span { color: #546d61; font-size: 12px; }
+.map-choices { min-height: 0; }
+.map-choices button { display: grid; grid-template-rows: minmax(0,1fr) auto auto; height: 100%; padding-bottom: 8px; }
+.map-choices canvas { height: 100%; min-height: 0; aspect-ratio: auto; object-fit: cover; }
+.map-choices strong { margin-top: 7px; }
+.map-record { min-height: 0; padding: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 18px; }
+.map-record small { grid-column: 1 / -1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.step-actions .primary-button { min-width: 160px; }
+.origin-step { grid-template-rows: minmax(0,1fr) auto auto; }
+.home-origin { min-height: 0; padding: 0; border: 0; display: grid; grid-template-rows: auto minmax(0,1fr); gap: clamp(10px,2vw,24px); }
+.home-origin .origin-choices { max-width: none; min-height: 0; }
+.home-origin .origin-choices button { display: grid; grid-template-rows: minmax(0,1fr) auto auto; align-items: center; padding: 6px 4px 10px; }
+.home-origin .element-art { height: 100%; min-height: 70px; }
+.origin-summary { display: flex; justify-content: center; gap: 10px; color: #607568; font-size: 12px; }
+.origin-summary strong { color: #31574c; }
+
+.in-battle { overflow: hidden; }
+.in-battle .app-shell { width: 100vw; height: 100svh; max-width: none; border: 0; display: grid; grid-template-columns: minmax(0,1fr) clamp(240px,22vw,300px); grid-template-rows: 58px minmax(0,1fr); }
+.in-battle .topbar { grid-column: 1 / -1; min-height: 58px; padding: 7px 16px; }
+.in-battle .brand-mark { width: 30px; height: 30px; }
+.in-battle .brand-block h1 { font-size: 21px; }
+.in-battle .battlefield { grid-column: 1; grid-row: 2; height: 100%; aspect-ratio: auto; }
+.in-battle .command-panel { grid-column: 2; grid-row: 2; min-width: 0; height: 100%; overflow-y: auto; display: grid; grid-template-columns: 1fr; align-content: start; gap: 0; padding: 12px; border-top: 0; border-left: 2px solid #98ac87; }
+.in-battle .command-panel > * { grid-column: 1 / -1; }
+.in-battle .wave-forecast { font-size: 10px; line-height: 1.55; }
+.in-battle .wave-forecast strong { display: block; margin: 0 0 3px; font-size: 12px; }
+.in-battle .status-row { align-items: flex-end; padding-bottom: 10px; margin-bottom: 10px; }
+.in-battle .threat { align-items: flex-start; flex-direction: column; gap: 3px; }
+.in-battle .selection-panel { align-items: flex-start; }
+.in-battle .tower-tray { grid-template-columns: 1fr; }
+.in-battle .tower-card { height: 66px; }
+.in-battle .inventory-row { margin-top: 10px; flex-wrap: wrap; }
+.in-battle .inventory-row > span { width: 100%; }
+.in-battle .element-inventory { grid-template-columns: repeat(3,44px); }
+.in-battle .element-inventory i, .in-battle .element-inventory button { width: 44px; height: 42px; }
+.in-battle .inventory-art { width: 27px; height: 27px; }
+.in-battle .hint { margin-top: 7px; }
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .home-setup { padding: 10px 14px; gap: 7px; }
+  .setup-heading { min-height: 40px; }
+  .setup-heading h2 { font-size: 24px; }
+  .map-choices strong { margin: 5px 8px 2px; font-size: 16px; }
+  .map-choices span { margin-inline: 8px; }
+  .map-record { font-size: 10px; line-height: 1.4; }
+  .home-origin .element-art { min-height: 52px; }
+  .home-origin .origin-choices b { font-size: 19px; margin-bottom: 1px; }
+  .in-battle .app-shell { grid-template-rows: 50px minmax(0,1fr); grid-template-columns: minmax(0,1fr) 250px; }
+  .in-battle .topbar { min-height: 50px; padding: 4px 10px; }
+  .in-battle .brand-block p { margin-top: 2px; }
+  .in-battle .command-panel { padding: 8px; }
+}
+@media (orientation: portrait) and (max-width: 680px) {
+  .rotate-notice { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; gap: 10px; color: #f8e9bd; background: #10292df2; text-align: center; }
+  .rotate-notice span { font-size: 48px; line-height: 1; }
+  .rotate-notice strong { font: 700 20px "STKaiti","KaiTi",serif; }
+}
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
