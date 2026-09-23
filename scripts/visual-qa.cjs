@@ -57,6 +57,7 @@ async function main() {
       await page.screenshot({ path: path.join(output, `origin-${width}.png`) });
       await page.locator('#origin-choices [data-element="water"]').click();
       await page.locator('#enter-button').click();
+      assert.equal(await page.locator('#element-inventory > *').count(),6,'element warehouse has six slots');
       await page.locator('#sound-button').click();
       for (const [name,value] of [['master','62'],['music','18'],['effects','43']]) await page.locator(`#volume-${name}`).fill(value);
       await page.waitForTimeout(400);

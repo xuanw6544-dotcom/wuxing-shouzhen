@@ -80,20 +80,22 @@
           <div id="loot-options" class="loot-options"></div>
           <span id="loot-copy">可与已有元素融合，也可放入空阵位</span>
           <div class="loot-actions">
-            <button id="stash-loot" class="text-button" type="button">收入元素栏</button>
+            <button id="stash-loot" class="text-button" type="button">收入元素仓库</button>
             <button id="use-loot" class="primary-button" type="button">立即布阵</button>
           </div>
         </div>
       </section>
 
       <section class="command-panel" hidden>
-        <div id="wave-forecast" class="wave-forecast" aria-live="polite"></div>
-        <div class="status-row">
-          <div class="threat">
-            <span>本波主属性</span>
-            <strong id="threat-value"><i class="element-dot fire"></i>火</strong>
+        <div class="battle-hud">
+          <div id="wave-forecast" class="wave-forecast" aria-live="polite"></div>
+          <div class="status-row">
+            <div class="threat">
+              <span>本波主属性</span>
+              <strong id="threat-value"><i class="element-dot fire"></i>火</strong>
+            </div>
+            <button id="wave-button" class="primary-button" type="button">开始第 1 波</button>
           </div>
-          <button id="wave-button" class="primary-button" type="button">开始第 1 波</button>
         </div>
 
         <div id="selection-panel" class="selection-panel hidden">
@@ -108,30 +110,32 @@
           </div>
         </div>
 
-        <div class="tower-tray" aria-label="五行防御塔">
-          <button class="tower-card metal" data-element="metal" type="button">
-            <span class="tower-glyph">金</span><strong>金锋</strong><small>50 · 穿透</small>
-          </button>
-          <button class="tower-card wood" data-element="wood" type="button">
-            <span class="tower-glyph">木</span><strong>青藤</strong><small>50 · 缠绕</small>
-          </button>
-          <button class="tower-card water" data-element="water" type="button">
-            <span class="tower-glyph">水</span><strong>玄水</strong><small>50 · 减速</small>
-          </button>
-          <button class="tower-card fire" data-element="fire" type="button">
-            <span class="tower-glyph">火</span><strong>赤焰</strong><small>50 · 范围</small>
-          </button>
-          <button class="tower-card earth" data-element="earth" type="button">
-            <span class="tower-glyph">土</span><strong>厚土</strong><small>50 · 重击</small>
-          </button>
-        </div>
-        <div class="inventory-row">
-          <span>元素栏</span>
-          <div id="element-inventory" class="element-inventory">
-            <i>空</i><i>空</i><i>空</i>
+        <div class="bottom-dock">
+          <div class="tower-tray" aria-label="五行防御塔">
+            <button class="tower-card metal" data-element="metal" type="button">
+              <span class="tower-glyph">金</span><strong>金锋</strong><small>50 · 穿透</small>
+            </button>
+            <button class="tower-card wood" data-element="wood" type="button">
+              <span class="tower-glyph">木</span><strong>青藤</strong><small>50 · 缠绕</small>
+            </button>
+            <button class="tower-card water" data-element="water" type="button">
+              <span class="tower-glyph">水</span><strong>玄水</strong><small>50 · 减速</small>
+            </button>
+            <button class="tower-card fire" data-element="fire" type="button">
+              <span class="tower-glyph">火</span><strong>赤焰</strong><small>50 · 范围</small>
+            </button>
+            <button class="tower-card earth" data-element="earth" type="button">
+              <span class="tower-glyph">土</span><strong>厚土</strong><small>50 · 重击</small>
+            </button>
           </div>
+          <div class="inventory-row">
+            <span>元素仓库 · 6</span>
+            <div id="element-inventory" class="element-inventory">
+              <i>空</i><i>空</i><i>空</i><i>空</i><i>空</i><i>空</i>
+            </div>
+          </div>
+          <p class="hint" id="hint-text">选择元素塔，再点击阵位布置</p>
         </div>
-        <p class="hint" id="hint-text">选择元素塔，再点击阵位布置</p>
       </section>
     </main>
     <div id="skill-tooltip" class="skill-tooltip" role="tooltip"></div>

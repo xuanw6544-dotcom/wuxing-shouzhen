@@ -237,8 +237,8 @@
       bindSkillTooltip(button, { title: `${element.name}元素核心`, description: ELEMENT_SKILLS[elementName] });
       ui.lootOptions.appendChild(button);
     });
-    ui.lootCopy.textContent = isBoss ? "选择一个核心，再收入元素栏或立即布阵" : "可与已有元素融合，也可放入空阵位";
-    ui.stashLoot.disabled = state.inventory.length >= 3;
+    ui.lootCopy.textContent = isBoss ? "选择一个核心，再收入元素仓库或立即布阵" : "可与已有元素融合，也可放入空阵位";
+    ui.stashLoot.disabled = state.inventory.length >= 6;
     ui.loot.classList.remove("hidden");
   }
 
@@ -284,7 +284,7 @@
       });
       ui.inventory.appendChild(button);
     });
-    for (let i=state.inventory.length;i<3;i++) {
+    for (let i=state.inventory.length;i<6;i++) {
       const empty = document.createElement("i"); empty.textContent = "空"; ui.inventory.appendChild(empty);
     }
   }
@@ -914,7 +914,7 @@
   ui.repair.addEventListener("click",()=>{const t=state.selectedTower;if(!t||state.waveActive||t.hp>=t.maxHp)return;const cost=20+t.level*12+(t.secondary?10:0);if(state.gold<cost)return;state.gold-=cost;t.hp=t.maxHp;t.brokenUntil=0;showToast(`${towerForm(t).name}已修复`);updateUI();});
   ui.originChoices.forEach(button=>button.addEventListener("click",()=>chooseOrigin(button.dataset.element)));
   ui.stashLoot.addEventListener("click",()=>{
-    if(state.inventory.length>=3)return showToast("元素栏已满，请先使用一个核心");
+    if(state.inventory.length>=6)return showToast("元素仓库已满，请先使用一个核心");
     state.inventory.push({id:++state.coreId,element:state.droppedElement});state.droppedElement=null;ui.loot.classList.add("hidden");renderInventory();updateUI();
   });
   ui.useLoot.addEventListener("click",()=>{
