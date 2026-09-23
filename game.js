@@ -29,7 +29,7 @@
   };
 
   const ORDER = ["metal", "wood", "water", "fire", "earth"];
-  const BASE_COST = 50;
+  const BASE_COST = 50, CORE_SELL_VALUE = 30;
   let MAP = world.maps.qinglan;
   const menu = { mapId: "qinglan", element: "metal", mode: "endless" };
   let lootRandom = Math.random, combatRandom = Math.random;
@@ -64,6 +64,8 @@
     lootOptions: document.getElementById("loot-options"), lootCopy: document.getElementById("loot-copy"),
     stashLoot: document.getElementById("stash-loot"), useLoot: document.getElementById("use-loot"),
     inventory: document.getElementById("element-inventory"), tray: document.querySelector(".tower-tray"),
+    coreActions: document.getElementById("core-action-bar"), selectedCoreAvatar: document.getElementById("selected-core-avatar"),
+    selectedCoreName: document.getElementById("selected-core-name"), sellCore: document.getElementById("sell-core-button"), cancelCore: document.getElementById("cancel-core-button"),
     skillTooltip: document.getElementById("skill-tooltip"),
     cards: [...document.querySelectorAll(".tower-card")]
   };
@@ -257,6 +259,7 @@
   }
 
   function selectCore(core) {
+    hideSkillTooltip();
     state.pendingCore = core;
     state.buildElement = null;
     state.selectedTower = null;
@@ -282,6 +285,16 @@
     ui.hint.textContent = message;
     renderInventory();
     updateUI();
+  }
+
+  function sellSelectedCore() {
+    const core=state.pendingCore;
+    if(!core||core.source!=="inventory")return;
+    state.inventory=state.inventory.filter(item=>item.id!==core.id);
+    state.gold+=CORE_SELL_VALUE;
+    state.pendingCore=null;state.pendingBuildSlot=null;state.previewBuild=null;state.buildElement=null;
+    showToast(`${ELEMENTS[core.element].name}元素已售卖，获得 ${CORE_SELL_VALUE} 灵气`);
+    audio.cue("select");renderInventory();updateUI();
   }
 
   function renderInventory() {
@@ -700,6 +713,7 @@
       if(state.commanderKilled){showToast(bossCleared?`第 ${state.wave} 波 Boss 已击败，获得三选一核心`:`第 ${state.wave} 波守住，精英掉落元素核心`);showLoot(bossCleared);}
       else showToast("首领突围，未获得元素核心");
     }
+    if(!state.waveActive&&state.initialElement&&!state.result&&!state.pendingCore&&ui.loot.classList.contains("hidden")&&state.time>=state.nextWaveReadyAt)startWave();
     updateUI();
   }
 
@@ -839,14 +853,20 @@
     const waveNumber=state.wave+1,wait=Math.max(0,Math.ceil(state.nextWaveReadyAt-state.time));
     ui.waveMiniNumber.textContent=`Wave ${waveNumber}`;
     ui.waveDrawerTitle.textContent=`Wave ${waveNumber}`;
-    ui.waveCountdown.textContent=state.waveActive?"战斗中":wait?`${wait}s`:"READY";
+    ui.waveCountdown.textContent=state.waveActive?"战斗中":wait?`${wait}s`:"开战";
     ui.waveMiniElement.textContent=e.name;ui.waveMiniElement.className=`wave-element ${info.element}`;ui.waveMiniElement.setAttribute("aria-label",`${e.name}元素`);
     ui.waveMini.classList.toggle("ready",!state.waveActive&&!wait);
-    if(!state.waveActive&&!wait&&!state.result&&ui.loot.classList.contains("hidden")&&state.waveAutoOpenedFor!==waveNumber){state.waveAutoOpenedFor=waveNumber;setWaveDrawer(true);}
-    ui.waveButton.textContent=state.waveActive?"迎敌中…":state.pendingCore?"请先安置元素":`开始 Wave ${waveNumber}`;
+    ui.waveButton.textContent=state.waveActive?"迎敌中…":state.pendingCore?"请先处理元素":`立即开始 Wave ${waveNumber}`;
     ui.waveButton.disabled=state.waveActive||state.result||!state.initialElement||!!state.pendingCore||!ui.loot.classList.contains("hidden");
     ui.cards.forEach(card=>card.disabled=state.gold<BASE_COST || state.result || !!state.pendingCore || card.dataset.element!==state.initialElement);
     ui.commands.classList.toggle("build-mode",state.pendingBuildSlot!==null);
+    const selectedCore=state.pendingCore?.source==="inventory"?state.pendingCore:null;
+    ui.coreActions.classList.toggle("hidden",!selectedCore);
+    if(selectedCore){
+      const coreElement=ELEMENTS[selectedCore.element];ui.selectedCoreName.textContent=`${coreElement.name}元素核心`;
+      if(ui.selectedCoreAvatar.dataset.element!==selectedCore.element){ui.selectedCoreAvatar.replaceChildren();art.decorate(ui.selectedCoreAvatar,selectedCore.element,"inventory-art");ui.selectedCoreAvatar.dataset.element=selectedCore.element;}
+      ui.sellCore.textContent=`售卖 +${CORE_SELL_VALUE}`;
+    }
     const previewNumber=state.wave+(state.waveActive?1:1),signature=`${MAP.id}:${previewNumber}`;
     if(ui.forecast.dataset.wave!==signature){
       ui.forecast.dataset.wave=signature;const plan=world.wavePlan(MAP,previewNumber);ui.forecast.replaceChildren();
@@ -973,14 +993,16 @@
   ui.sell.addEventListener("click",()=>{const t=state.selectedTower;if(!t)return;state.gold+=Math.floor(t.invested*.65);state.towers=state.towers.filter(x=>x!==t);state.selectedTower=null;updateSynergy();updateUI();});
   ui.upgrade.addEventListener("click",()=>{const t=state.selectedTower;if(!t||t.level>=3)return;const cost=45+t.level*30;if(state.gold<cost)return;state.gold-=cost;const previousMax=t.maxHp;t.level++;t.maxHp=towerMaxHp(t);t.hp+=t.maxHp-previousMax;t.invested+=cost;const form=towerForm(t);showToast(`${form.name}升至${["壹","贰","叁"][t.level-1]}阶，攻速与生命提升`);updateUI();});
   ui.skill.addEventListener("click",()=>{ui.selection.classList.toggle("skill-open");ui.skill.setAttribute("aria-pressed",String(ui.selection.classList.contains("skill-open")));});
+  ui.sellCore.addEventListener("click",sellSelectedCore);
+  ui.cancelCore.addEventListener("click",()=>resumeOriginBuild("已取消元素核心，继续布置本命塔"));
   ui.repair.addEventListener("click",()=>{const t=state.selectedTower;if(!t||state.waveActive||t.hp>=t.maxHp)return;const cost=20+t.level*12+(t.secondary?10:0);if(state.gold<cost)return;state.gold-=cost;t.hp=t.maxHp;t.brokenUntil=0;showToast(`${towerForm(t).name}已修复`);updateUI();});
   ui.originChoices.forEach(button=>button.addEventListener("click",()=>chooseOrigin(button.dataset.element)));
   ui.stashLoot.addEventListener("click",()=>{
     if(state.inventory.length>=6)return showToast("元素仓库已满，请先使用一个核心");
-    state.inventory.push({id:++state.coreId,element:state.droppedElement});state.droppedElement=null;ui.loot.classList.add("hidden");renderInventory();updateUI();
+    state.inventory.push({id:++state.coreId,element:state.droppedElement});state.droppedElement=null;ui.loot.classList.add("hidden");state.nextWaveReadyAt=state.time+12;renderInventory();updateUI();
   });
   ui.useLoot.addEventListener("click",()=>{
-    const core={id:++state.coreId,element:state.droppedElement,source:"drop"};state.droppedElement=null;ui.loot.classList.add("hidden");selectCore(core);
+    const core={id:++state.coreId,element:state.droppedElement,source:"drop"};state.droppedElement=null;ui.loot.classList.add("hidden");state.nextWaveReadyAt=state.time+12;selectCore(core);
   });
   window.addEventListener("resize",()=>{resize();updateSynergy();});
 
