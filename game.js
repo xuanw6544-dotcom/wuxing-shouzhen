@@ -950,7 +950,7 @@
   canvas.addEventListener("pointermove", event => {
     if (event.pointerType === "touch" || !state.towers.length) return;
     if (state.selectedTower) { hideSkillTooltip(); return; }
-    const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;
+    const rect=canvas.getBoundingClientRect(),point=window.Wuxing3D?.active?window.Wuxing3D.input(event.clientX,event.clientY):{x:event.clientX-rect.left,y:event.clientY-rect.top},x=point.x,y=point.y;
     const tower=state.towers.find(item=>{
       const [tx,ty]=MAP.slots[item.slot];return Math.hypot(x-tx*state.width,y-ty*state.height)<Math.max(25,state.width*.04);
     });
@@ -967,7 +967,7 @@
   canvas.addEventListener("pointerdown",event=>{
     if (state.result || state.paused) return;
     hideSkillTooltip();
-    const rect=canvas.getBoundingClientRect(),x=event.clientX-rect.left,y=event.clientY-rect.top;
+    const rect=canvas.getBoundingClientRect(),point=window.Wuxing3D?.active?window.Wuxing3D.input(event.clientX,event.clientY):{x:event.clientX-rect.left,y:event.clientY-rect.top},x=point.x,y=point.y;
     let nearest=-1,distance=Infinity;
     MAP.slots.forEach((p,i)=>{const d=Math.hypot(x-p[0]*state.width,y-p[1]*state.height);if(d<distance){distance=d;nearest=i;}});
     if(distance>Math.max(28,state.width*.045)){state.selectedTower=null;state.pendingBuildSlot=null;state.previewBuild=null;state.buildElement=null;updateUI();return;}

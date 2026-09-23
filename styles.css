@@ -403,3 +403,10 @@ body.three-ready #game-canvas { opacity: 0; }
   .tower-stats { gap: 3px 8px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+
+/* Context actions stay within the screen; the old centered transform cannot be used with side anchors. */
+.in-battle .tower-bottom-sheet[data-anchor] { left: 12px; right: auto; width: min(610px,calc(100% - 24px)); transform: none; animation: dock-in 200ms ease-out; }
+.in-battle .tower-bottom-sheet[data-anchor="right"] { left: auto; right: 12px; }
+body.three-ready .core-action-bar { position: fixed; top: 52px; bottom: auto; left: 12px; transform: none; min-width: 0; max-width: calc(100vw - 200px); animation: dock-in 200ms ease-out; }
+body.three-ready .core-action-copy span { display: none; }
+.map-choices { grid-template-columns: repeat(4,minmax(0,1fr)); }
