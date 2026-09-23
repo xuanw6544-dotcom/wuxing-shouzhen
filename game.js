@@ -1022,6 +1022,9 @@
   });
   window.addEventListener("resize",()=>{resize();updateSynergy();});
 
+  // The optional Three.js renderer reads this stable view without owning any game rules.
+  window.WuxingGame = { state, getMap: () => MAP, getTowerForm: towerForm };
+
   let last=performance.now();
   function loop(now){const dt=Math.min((now-last)/1000,.05);last=now;if(state.scene==="battle"){update(dt);draw();}requestAnimationFrame(loop);}
   buildMenu();renderInventory();showHome();requestAnimationFrame(loop);

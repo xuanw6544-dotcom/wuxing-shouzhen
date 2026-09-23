@@ -30,6 +30,9 @@ button:focus-visible { outline: 2px solid #ffdf97; outline-offset: 4px; }
 .coin { color: #eac680; } .heart { color: #f49784; }
 .battlefield { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; background: #315e55; }
 #game-canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#three-canvas { position: absolute; inset: 0; z-index: 0; display: block; width: 100%; height: 100%; pointer-events: none; }
+#game-canvas { position: relative; z-index: 1; }
+body.three-ready #game-canvas { opacity: 0; }
 .field-label { position: absolute; left: 23px; top: 20px; display: flex; align-items: center; gap: 12px; pointer-events: none; color: #e0e9cc; text-shadow: 0 1px 3px #173a37; }
 .field-label span { font: 19px "STKaiti", "KaiTi", serif; }
 .field-label small { border-left: 1px solid #b7c9a477; padding-left: 12px; font-size: 10px; }
