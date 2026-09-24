@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta name="theme-color" content="#101512" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="manifest" href="./manifest.webmanifest" />
     <title>五行守阵</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
@@ -19,6 +23,7 @@
         </div>
         <div class="resources" aria-label="战局资源">
           <button id="home-button" class="icon-button" type="button" aria-label="返回山门" title="返回山门" hidden>⌂</button>
+          <button id="fullscreen-button" class="icon-button" type="button" aria-label="进入全屏" title="进入全屏" hidden>⛶</button>
           <div><span class="resource-icon coin">◆</span><strong id="gold-value">160</strong></div>
           <div><span class="resource-icon heart">♥</span><strong id="life-value">10</strong></div>
           <button id="sound-button" class="icon-button" type="button" aria-label="声音设置" aria-controls="sound-panel" aria-expanded="false" title="声音设置">♫</button>

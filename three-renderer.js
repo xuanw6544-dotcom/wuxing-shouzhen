@@ -19,8 +19,10 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x9fbfc3);
 scene.fog = new THREE.FogExp2(0xa6c2c3, 0.012);
 const camera = new THREE.OrthographicCamera(-12, 12, 7, -7, 0.1, 100);
-camera.position.set(7, 19, 22);
-camera.lookAt(0, 0, 0);
+// Lower the orthographic camera to give the floating island more depth while
+// keeping slot projection stable for touch input.
+camera.position.set(7, 15, 24);
+camera.lookAt(0, 0.1, 0);
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "high-performance" });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
 renderer.shadowMap.enabled = true;

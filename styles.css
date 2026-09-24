@@ -410,3 +410,27 @@ body.three-ready #game-canvas { opacity: 0; }
 body.three-ready .core-action-bar { position: fixed; top: 52px; bottom: auto; left: 12px; transform: none; min-width: 0; max-width: calc(100vw - 200px); animation: dock-in 200ms ease-out; }
 body.three-ready .core-action-copy span { display: none; }
 .map-choices { grid-template-columns: repeat(4,minmax(0,1fr)); }
+
+/* Inventory actions sit above the dock so the sell command remains fully visible. */
+body.three-ready .command-panel { z-index: 25; }
+body.three-ready .core-action-bar {
+  z-index: 24;
+  box-sizing: border-box;
+  top: auto;
+  left: 50%;
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  width: min(450px, calc(100vw - 24px));
+  min-width: 0;
+  max-width: none;
+  justify-content: stretch;
+  transform: translateX(-50%);
+  animation: core-actions-in 200ms ease-out both;
+}
+body.three-ready .core-action-copy { min-width: 0; }
+body.three-ready #sell-core-button { flex: 0 0 auto; min-width: 92px; white-space: nowrap; }
+body.three-ready .core-cancel-button { flex: 0 0 27px; }
+@media (orientation: landscape) and (max-width: 900px) {
+  body.three-ready .core-action-bar { bottom: calc(65px + env(safe-area-inset-bottom)); width: min(420px, calc(100vw - 20px)); }
+  body.three-ready .core-action-avatar { width: 34px; height: 36px; }
+  body.three-ready #sell-core-button { min-width: 88px; padding-inline: 8px; }
+}

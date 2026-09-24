@@ -70,7 +70,7 @@
     cards: [...document.querySelectorAll(".tower-card")]
   };
   Object.assign(ui, {
-    home: document.getElementById("home-screen"), homeButton: document.getElementById("home-button"),
+    home: document.getElementById("home-screen"), homeButton: document.getElementById("home-button"), fullscreenButton: document.getElementById("fullscreen-button"),
     enter: document.getElementById("enter-button"), resume: document.getElementById("resume-button"),
     openMenu: document.getElementById("open-menu-button"), landingStep: document.getElementById("landing-step"),
     mapStep: document.getElementById("map-step"), originStep: document.getElementById("origin-step"),
@@ -128,11 +128,11 @@
   }
   function showHome() {
     saveRecord();state.scene="menu";state.paused=true;hideSkillTooltip();
-    ui.home.hidden=false;ui.battlefield.hidden=true;ui.commands.hidden=true;ui.homeButton.hidden=true;
+    ui.home.hidden=false;ui.battlefield.hidden=true;ui.commands.hidden=true;ui.homeButton.hidden=true;ui.fullscreenButton.hidden=true;
     document.body.classList.add("at-home");document.body.classList.remove("in-battle");audio.setPaused(false);showMenuStep("landing");ui.waveLabel.textContent="山海有灵 · 五行成阵";
   }
   function showBattle() {
-    state.scene="battle";state.paused=false;ui.home.hidden=true;ui.battlefield.hidden=false;ui.commands.hidden=false;ui.homeButton.hidden=false;
+    state.scene="battle";state.paused=false;ui.home.hidden=true;ui.battlefield.hidden=false;ui.commands.hidden=false;ui.homeButton.hidden=false;ui.fullscreenButton.hidden=false;
     document.body.classList.remove("at-home");document.body.classList.add("in-battle");ui.mapName.textContent=MAP.name;ui.modeName.textContent=state.runMode==="trial"?"定序试炼·壹":"无尽守境";
     ui.pause.textContent="Ⅱ";ui.pause.setAttribute("aria-label","暂停");audio.setPaused(false);hideSkillTooltip();resize();updateUI();
   }
@@ -995,6 +995,20 @@
   ui.pause.addEventListener("click",()=>{state.paused=!state.paused;audio.setPaused(state.paused);ui.pause.textContent=state.paused?"▶":"Ⅱ";ui.pause.setAttribute("aria-label",state.paused?"继续":"暂停");});
   ui.restart.addEventListener("click",()=>{menu.mapId=state.mapId;menu.mode=state.runMode;menu.element=state.initialElement;reset();});
   ui.homeButton.addEventListener("click",showHome);
+  ui.fullscreenButton.addEventListener("click",async()=>{
+    try {
+      if(document.fullscreenElement){await document.exitFullscreen();return;}
+      if(!document.documentElement.requestFullscreen){showToast("当前浏览器不支持网页全屏，请用浏览器菜单打开全屏");return;}
+      await document.documentElement.requestFullscreen({navigationUI:"hide"});
+      const orientation=screen.orientation;
+      if(orientation?.lock) await orientation.lock("landscape").catch(()=>{});
+    } catch { showToast("全屏被当前浏览器拦截，请选择在浏览器中打开"); }
+  });
+  document.addEventListener("fullscreenchange",()=>{
+    const active=!!document.fullscreenElement;
+    ui.fullscreenButton.setAttribute("aria-label",active?"退出全屏":"进入全屏");
+    ui.fullscreenButton.title=active?"退出全屏":"进入全屏";
+  });
   ui.resultHome.addEventListener("click",showHome);
   ui.openMenu.addEventListener("click",()=>showMenuStep("map"));
   ui.mapBack.addEventListener("click",()=>showMenuStep("landing"));

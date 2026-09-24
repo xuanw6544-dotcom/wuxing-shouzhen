@@ -1,0 +1,11 @@
+{
+  "name": "五行守阵",
+  "short_name": "五行守阵",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#10292d",
+  "theme_color": "#10292d"
+}
