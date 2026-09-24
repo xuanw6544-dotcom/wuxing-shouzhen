@@ -441,19 +441,19 @@ body.three-ready .core-cancel-button { flex: 0 0 27px; }
 }
 
 /* The model sits behind the original buttons, preserving touch and keyboard input. */
-.dais-ready.in-battle .bottom-dock { width: min(630px,calc(100% - 24px)); max-width: 630px; height: 94px; min-height: 0; bottom: env(safe-area-inset-bottom,0px); padding: 0 10px; gap: 0; border: 0; border-radius: 0; background: none; box-shadow: none; backdrop-filter: none; }
+.dais-ready.in-battle .bottom-dock { width: min(560px,calc(100% - 24px)); max-width: 560px; height: 76px; min-height: 0; bottom: env(safe-area-inset-bottom,0px); padding: 0 8px; gap: 0; border: 0; border-radius: 0; background: none; box-shadow: none; backdrop-filter: none; }
 .dais-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .dais-ready.in-battle .tower-tray.single { flex: 1; width: auto; min-width: 0; z-index: 1; }
 .dais-ready.in-battle .inventory-row { flex: 6; min-width: 0; display: block; z-index: 1; }
 .dais-ready.in-battle .element-inventory { grid-template-columns: repeat(6,minmax(0,1fr)); gap: 0; }
-.dais-ready.in-battle .tower-card,.dais-ready.in-battle .element-inventory button,.dais-ready.in-battle .element-inventory i { width: 100%; height: 90px; margin: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 0 5px; border: 0; border-radius: 4px; background: none; box-shadow: none; font-size: 11px; text-shadow: 0 1px 3px #000; }
-.dais-ready.in-battle .tower-card strong { align-self: center; font-size: 11px; }
+.dais-ready.in-battle .tower-card,.dais-ready.in-battle .element-inventory button,.dais-ready.in-battle .element-inventory i { width: 100%; height: 72px; margin: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 0 4px; border: 0; border-radius: 4px; background: none; box-shadow: none; font-size: 10px; text-shadow: 0 1px 3px #000; }
+.dais-ready.in-battle .tower-card strong { align-self: center; font-size: 10px; }
 .dais-ready.in-battle .tower-card.locked { display: none; }
 .dais-ready.in-battle .core-action-bar { pointer-events: auto; }
-.dais-ready.in-battle .tower-card small { align-self: center; margin: 0; font-size: 10px; }
+.dais-ready.in-battle .tower-card small { align-self: center; margin: 0; font-size: 9px; }
 .dais-ready.in-battle .tower-card .element-art,.dais-ready.in-battle .inventory-art,.dais-ready.in-battle .inventory-row > span,.dais-ready.in-battle .bottom-dock > .hint { display: none; }
 .dais-ready.in-battle .element-inventory i { color: #a9b5a0; font-style: normal; }
 .dais-ready.in-battle .tower-card.selected,.dais-ready.in-battle .element-inventory button.selected { background: linear-gradient(0deg,#dcc78130,transparent 65%); }
 .dais-ready.in-battle .command-panel.build-mode .bottom-dock { transform: translateX(-50%); }
 .dais-ready.in-battle .core-action-bar { position: fixed; top: 52px; bottom: auto; left: 12px; width: min(400px,calc(100vw - 190px)); transform: none; animation: dock-in 200ms ease-out; }
-@media(max-height:450px) { .dais-ready.in-battle .bottom-dock { height: 76px; width: min(550px,calc(100% - 20px)); } .dais-ready.in-battle .tower-card,.dais-ready.in-battle .element-inventory button,.dais-ready.in-battle .element-inventory i { height: 74px; } }
+@media(max-height:450px) { .dais-ready.in-battle .bottom-dock { height: 60px; width: min(500px,calc(100% - 20px)); padding-inline: 6px; } .dais-ready.in-battle .tower-card,.dais-ready.in-battle .element-inventory button,.dais-ready.in-battle .element-inventory i { height: 58px; padding-bottom: 2px; } .dais-ready.in-battle .tower-card strong { font-size: 9px; } .dais-ready.in-battle .tower-card small { font-size: 8px; } }
