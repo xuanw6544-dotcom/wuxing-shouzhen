@@ -129,7 +129,7 @@
   function showHome() {
     saveRecord();state.scene="menu";state.paused=true;hideSkillTooltip();
     ui.home.hidden=false;ui.battlefield.hidden=true;ui.commands.hidden=true;ui.homeButton.hidden=true;ui.fullscreenButton.hidden=true;
-    document.body.classList.add("at-home");document.body.classList.remove("in-battle");audio.setPaused(false);showMenuStep("landing");ui.waveLabel.textContent="山海有灵 · 五行成阵";
+    document.body.classList.add("at-home");document.body.classList.remove("in-battle","loot-open");audio.setPaused(false);showMenuStep("landing");ui.waveLabel.textContent="山海有灵 · 五行成阵";
   }
   function showBattle() {
     state.scene="battle";state.paused=false;ui.home.hidden=true;ui.battlefield.hidden=false;ui.commands.hidden=false;ui.homeButton.hidden=false;ui.fullscreenButton.hidden=false;
@@ -255,6 +255,7 @@
     });
     ui.lootCopy.textContent = isBoss ? "选择一个核心，再收入元素仓库或立即布阵" : "可与已有元素融合，也可放入空阵位";
     ui.stashLoot.disabled = state.inventory.length >= 6;
+    document.body.classList.add("loot-open");
     ui.loot.classList.remove("hidden");
   }
 
@@ -1029,10 +1030,10 @@
   ui.originChoices.forEach(button=>button.addEventListener("click",()=>chooseOrigin(button.dataset.element)));
   ui.stashLoot.addEventListener("click",()=>{
     if(state.inventory.length>=6)return showToast("元素仓库已满，请先使用一个核心");
-    state.inventory.push({id:++state.coreId,element:state.droppedElement});state.droppedElement=null;ui.loot.classList.add("hidden");state.nextWaveReadyAt=state.time+12;renderInventory();updateUI();
+    state.inventory.push({id:++state.coreId,element:state.droppedElement});state.droppedElement=null;ui.loot.classList.add("hidden");document.body.classList.remove("loot-open");state.nextWaveReadyAt=state.time+12;renderInventory();updateUI();
   });
   ui.useLoot.addEventListener("click",()=>{
-    const core={id:++state.coreId,element:state.droppedElement,source:"drop"};state.droppedElement=null;ui.loot.classList.add("hidden");state.nextWaveReadyAt=state.time+12;selectCore(core);
+    const core={id:++state.coreId,element:state.droppedElement,source:"drop"};state.droppedElement=null;ui.loot.classList.add("hidden");document.body.classList.remove("loot-open");state.nextWaveReadyAt=state.time+12;selectCore(core);
   });
   window.addEventListener("resize",()=>{resize();updateSynergy();});
 

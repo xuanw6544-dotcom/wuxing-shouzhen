@@ -346,6 +346,7 @@ body.three-ready #game-canvas { opacity: 0; }
 .in-battle .wave-drawer .threat > span { display: inline; color: #90a898; }
 
 .in-battle .bottom-dock { left: 50%; bottom: 8px; display: flex; width: max-content; max-width: calc(100% - 24px); min-height: 68px; padding: 7px; gap: 6px; transform: translateX(-50%); border-color: #b29b6e99; border-radius: 10px; background: #15373be6; box-shadow: 0 9px 26px #071e2677, inset 0 1px #ffffff16; transition: transform 220ms cubic-bezier(.2,.8,.2,1), opacity 180ms ease-out, border-color 180ms ease-out; animation: dock-in 220ms ease-out both; }
+.in-battle .bottom-dock { bottom: 0; width: min(1120px,100%); max-width: none; padding-bottom: calc(7px + env(safe-area-inset-bottom)); border-right: 0; border-bottom: 0; border-left: 0; border-radius: 14px 14px 0 0; background: linear-gradient(180deg,#244a49f2,#153638f8); box-shadow: 0 -8px 26px #071e2677, inset 0 1px #ffffff18; }
 .in-battle .tower-tray, .in-battle .tower-tray.single { width: 104px; }
 .in-battle .tower-card { width: 104px; height: 54px; grid-template-columns: 42px 1fr; border-radius: 7px; background: #254b4ae8; }
 .in-battle .tower-card:hover, .in-battle .tower-card.selected { transform: translateY(-3px); border-color: #e0c681; box-shadow: 0 5px 13px #071f2766; }
@@ -377,6 +378,8 @@ body.three-ready #game-canvas { opacity: 0; }
 .tower-bottom-sheet.skill-open .tower-skill-detail { white-space: normal; }
 .tower-bottom-sheet .selection-actions { justify-content: flex-end; max-width: 220px; }
 .wave-drawer[hidden], .in-battle .tower-bottom-sheet.hidden { display: none; }
+.in-battle.loot-open .command-panel { visibility: hidden; pointer-events: none; }
+.in-battle.loot-open .choice-panel { z-index: 40; }
 
 @keyframes drawer-in { from { opacity: 0; transform: scale(.94) translateY(-5px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 @keyframes sheet-in { from { opacity: 0; transform: translate(-50%,18px) scale(.97); } to { opacity: 1; transform: translate(-50%,0) scale(1); } }
