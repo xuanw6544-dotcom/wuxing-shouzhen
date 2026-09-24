@@ -250,17 +250,44 @@ function syncEnemies() {
   }
 }
 
+let viewBlend = 0, lastFrameTime = 0;
+let viewportWidth = 1, viewportHeight = 1, dockHeight = 76;
+function frameCamera() {
+  const state = window.WuxingGame.state;
+  camera.position.set(3, 18 + 9 * viewBlend, 24 - 5 * viewBlend);
+  camera.lookAt(0, 0.1, 0);
+  camera.updateMatrixWorld(true);
+  // Fit island, entrance gates and tower headroom above the reserved dock strip.
+  const bounds = new THREE.Box3();
+  const map = window.WuxingGame.getMap();
+  const points = [...map.routes.flat(), ...map.slots];
+  const xs = points.map(p => (p[0]-.5)*22), zs = points.map(p => (p[1]-.5)*12);
+  for(const x of [Math.min(-11,...xs)-.65, Math.max(11,...xs)+.65])
+    for(const z of [Math.min(-6,...zs)-.4, Math.max(6,...zs)+.4])
+      for(const y of [-1.8,2.8]) bounds.expandByPoint(new THREE.Vector3(x,y,z).applyMatrix4(camera.matrixWorldInverse));
+  const aspect=viewportWidth/viewportHeight;
+  const available=Math.max(.35,(viewportHeight-dockHeight-12)/viewportHeight);
+  const size=Math.max((bounds.max.x-bounds.min.x)/(2*aspect*.90),(bounds.max.y-bounds.min.y)/(2*available));
+  const center=(bounds.min.y+bounds.max.y)/2-(dockHeight/viewportHeight)*size;
+  camera.left=-size*aspect;camera.right=size*aspect;
+  camera.top=center+size;camera.bottom=center-size;
+  camera.updateProjectionMatrix();
+}
 function resize() {
   const rect = host.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
-  const aspect = rect.width / rect.height, size = Math.max(8.9,15/aspect);
-  camera.left = -size * aspect; camera.right = size * aspect; camera.top = size; camera.bottom = -size;
-  camera.updateProjectionMatrix(); renderer.setSize(rect.width, rect.height, false);
+  viewportWidth=rect.width;viewportHeight=rect.height;
+  dockHeight=document.querySelector('.bottom-dock')?.getBoundingClientRect().height || 76;
+  frameCamera();renderer.setSize(rect.width, rect.height, false);
 }
 
 function frame(time) {
   if(!window.Wuxing3D.active)return;
   const state = window.WuxingGame.state;
+  const dt=Math.min(.05,Math.max(0,(time-lastFrameTime)/1000));lastFrameTime=time;
+  const target=!state.waveActive&&!state.result?1:0;
+  viewBlend+=(target-viewBlend)*(1-Math.exp(-dt*7));
+  frameCamera();
   waterTime.value=state.time;
   if (state.mapId !== lastMapId) { buildMap(window.WuxingGame.getMap()); lastMapId = state.mapId; }
   if (!host.hidden && state.scene === "battle") { syncTowers(); syncEnemies(); }
@@ -270,11 +297,18 @@ function frame(time) {
 
 window.addEventListener("resize", resize);
 new ResizeObserver(resize).observe(host);
+new ResizeObserver(resize).observe(document.querySelector('.bottom-dock'));
 window.Wuxing3D={active:new URLSearchParams(location.search).get('renderer')!=='canvas',
   projectSlot(i){const p=pads[i].position.clone().project(camera),r=host.getBoundingClientRect();return {x:r.left+(p.x+1)*r.width/2,y:r.top+(1-p.y)*r.height/2};},
-  input(x,y){const r=host.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((x-r.left)/r.width*2-1,1-(y-r.top)/r.height*2),camera);
+  input(x,y,touch=false){const r=host.getBoundingClientRect();raycaster.setFromCamera(new THREE.Vector2((x-r.left)/r.width*2-1,1-(y-r.top)/r.height*2),camera);
     const hits=raycaster.intersectObjects([...pads,...towerGroup.children],true);let slot=null;
     for(const hit of hits){let o=hit.object;while(o&&slot===null){if(o.userData.slot!==undefined)slot=o.userData.slot;else if(o.userData.tower)slot=o.userData.tower.slot;o=o.parent;}if(slot!==null)break;}
+    if(slot===null){
+      let closest=touch?30:18;
+      pads.forEach((pad,i)=>{const p=window.Wuxing3D.projectSlot(i),d=Math.hypot(x-p.x,y-p.y);
+        if(d<closest){closest=d;slot=i;}
+      });
+    }
     if(slot===null)return {x:-10000,y:-10000};const [nx,ny]=window.WuxingGame.getMap().slots[slot];return {x:nx*window.WuxingGame.state.width,y:ny*window.WuxingGame.state.height};},
   stats:()=>({...renderer.info.memory,calls:renderer.info.render.calls,
     towerModels:[...towerMeshes.values()].map(mesh=>mesh.name),

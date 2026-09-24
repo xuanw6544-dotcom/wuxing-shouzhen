@@ -96,6 +96,8 @@ body.three-ready #game-canvas { opacity: 0; }
 .skill-tooltip { position: fixed; z-index: 20; width: min(248px, calc(100vw - 24px)); padding: 12px 14px; border: 1px solid #a5b69b; border-radius: 5px; background: #173638f7; color: #d9e7d9; box-shadow: 0 8px 24px #061e2355; font-size: 12px; line-height: 1.7; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .12s; }
 .skill-tooltip.show { opacity: 1; visibility: visible; }
 .skill-tooltip strong { display: block; padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid #6c8a7355; color: #f4d9a4; font-size: 13px; }
+.skill-tooltip.compact { width: auto; min-width: 118px; max-width: 160px; padding: 6px 9px; border-radius: 4px; font-size: 10px; line-height: 1.25; white-space: nowrap; text-align: center; }
+.skill-tooltip.compact strong { display: inline; margin: 0 7px 0 0; padding: 0 7px 0 0; border: 0; border-right: 1px solid #6c8a7388; font-size: 11px; }
 @media (min-width: 981px) { body { padding: 24px 0; } .app-shell { box-shadow: 0 16px 65px #061f2655; } }
 @media (max-width: 680px) {
   .app-shell { border: 0; }
@@ -437,3 +439,21 @@ body.three-ready .core-cancel-button { flex: 0 0 27px; }
   body.three-ready .core-action-avatar { width: 34px; height: 36px; }
   body.three-ready #sell-core-button { min-width: 88px; padding-inline: 8px; }
 }
+
+/* The model sits behind the original buttons, preserving touch and keyboard input. */
+.dais-ready.in-battle .bottom-dock { width: min(630px,calc(100% - 24px)); max-width: 630px; height: 94px; min-height: 0; bottom: env(safe-area-inset-bottom,0px); padding: 0 10px; gap: 0; border: 0; border-radius: 0; background: none; box-shadow: none; backdrop-filter: none; }
+.dais-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.dais-ready.in-battle .tower-tray.single { flex: 1; width: auto; min-width: 0; z-index: 1; }
+.dais-ready.in-battle .inventory-row { flex: 6; min-width: 0; display: block; z-index: 1; }
+.dais-ready.in-battle .element-inventory { grid-template-columns: repeat(6,minmax(0,1fr)); gap: 0; }
+.dais-ready.in-battle .tower-card,.dais-ready.in-battle .element-inventory button,.dais-ready.in-battle .element-inventory i { width: 100%; height: 90px; margin: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 0 5px; border: 0; border-radius: 4px; background: none; box-shadow: none; font-size: 11px; text-shadow: 0 1px 3px #000; }
+.dais-ready.in-battle .tower-card strong { align-self: center; font-size: 11px; }
+.dais-ready.in-battle .tower-card.locked { display: none; }
+.dais-ready.in-battle .core-action-bar { pointer-events: auto; }
+.dais-ready.in-battle .tower-card small { align-self: center; margin: 0; font-size: 10px; }
+.dais-ready.in-battle .tower-card .element-art,.dais-ready.in-battle .inventory-art,.dais-ready.in-battle .inventory-row > span,.dais-ready.in-battle .bottom-dock > .hint { display: none; }
+.dais-ready.in-battle .element-inventory i { color: #a9b5a0; font-style: normal; }
+.dais-ready.in-battle .tower-card.selected,.dais-ready.in-battle .element-inventory button.selected { background: linear-gradient(0deg,#dcc78130,transparent 65%); }
+.dais-ready.in-battle .command-panel.build-mode .bottom-dock { transform: translateX(-50%); }
+.dais-ready.in-battle .core-action-bar { position: fixed; top: 52px; bottom: auto; left: 12px; width: min(400px,calc(100vw - 190px)); transform: none; animation: dock-in 200ms ease-out; }
+@media(max-height:450px) { .dais-ready.in-battle .bottom-dock { height: 76px; width: min(550px,calc(100% - 20px)); } .dais-ready.in-battle .tower-card,.dais-ready.in-battle .element-inventory button,.dais-ready.in-battle .element-inventory i { height: 74px; } }

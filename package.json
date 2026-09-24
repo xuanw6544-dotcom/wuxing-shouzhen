@@ -5,7 +5,7 @@
   "description": "五行守阵 web and Android build",
   "scripts": {
     "mobile:prepare": "node scripts/prepare-mobile.cjs",
-    "mobile:sync": "npm run mobile:prepare && npx cap sync android",
+    "mobile:sync": "npm run mobile:prepare && npx cap sync android && node scripts/configure-android.cjs",
     "mobile:open": "npx cap open android",
     "mobile:build": "npm run mobile:sync && cd android && gradlew.bat assembleDebug"
   },

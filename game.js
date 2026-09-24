@@ -156,16 +156,27 @@
     fire: "火克金。火球命中产生范围爆燃。三级后爆炸范围扩大。",
     earth: "土克水。重击有概率震住敌人。三级后提高震荡概率。"
   };
+  const ELEMENT_BRIEFS = {
+    metal: { title: "金 · 穿透", description: "克木" },
+    wood: { title: "木 · 缠绕", description: "克土" },
+    water: { title: "水 · 减速", description: "克火" },
+    fire: { title: "火 · 爆燃", description: "克金" },
+    earth: { title: "土 · 震荡", description: "克水" }
+  };
 
-  function showSkillTooltip(title, description, clientX, clientY) {
+  function showSkillTooltip(title, description, clientX, clientY, compact = false, anchor = null) {
     ui.skillTooltip.innerHTML = `<strong>${title}</strong>${description}`;
+    ui.skillTooltip.classList.toggle("compact", compact);
     ui.skillTooltip.classList.add("show");
     const viewportWidth = window.innerWidth || 1000;
     const viewportHeight = window.innerHeight || 800;
     const width = ui.skillTooltip.offsetWidth || 220;
     const height = ui.skillTooltip.offsetHeight || 70;
-    ui.skillTooltip.style.left = `${Math.max(8, Math.min(clientX + 14, viewportWidth - width - 8))}px`;
-    ui.skillTooltip.style.top = `${Math.max(8, Math.min(clientY + 14, viewportHeight - height - 8))}px`;
+    const rect = compact && anchor ? anchor.getBoundingClientRect() : null;
+    const left = rect ? rect.left + rect.width / 2 - width / 2 : clientX + 14;
+    const top = rect ? rect.top - height - 7 : clientY + 14;
+    ui.skillTooltip.style.left = `${Math.max(8, Math.min(left, viewportWidth - width - 8))}px`;
+    ui.skillTooltip.style.top = `${Math.max(8, Math.min(top, viewportHeight - height - 8))}px`;
   }
 
   function hideSkillTooltip() {
@@ -176,7 +187,7 @@
     const reveal = event => {
       if (event.pointerType === "touch") return;
       const skill = typeof content === "function" ? content() : content;
-      if (skill) showSkillTooltip(skill.title, skill.description, event.clientX, event.clientY);
+      if (skill) showSkillTooltip(skill.title, skill.description, event.clientX, event.clientY, !!skill.compact, node);
     };
     node.addEventListener("pointerenter", reveal);
     node.addEventListener("pointermove", reveal);
@@ -308,7 +319,7 @@
       button.style.color = ELEMENTS[core.element].color;
       button.classList.toggle("selected", state.pendingCore?.id === core.id);
       button.setAttribute("aria-label", `使用${ELEMENTS[core.element].name}元素`);
-      bindSkillTooltip(button, { title: `${ELEMENTS[core.element].name}元素`, description: ELEMENT_SKILLS[core.element] });
+      bindSkillTooltip(button, { ...ELEMENT_BRIEFS[core.element], compact: true });
       button.addEventListener("click", () => {
         if (state.pendingCore?.id === core.id) resumeOriginBuild("已取消元素核心，继续布置本命塔");
         else selectCore({ ...core, source: "inventory" });
@@ -951,7 +962,7 @@
   canvas.addEventListener("pointermove", event => {
     if (event.pointerType === "touch" || !state.towers.length) return;
     if (state.selectedTower) { hideSkillTooltip(); return; }
-    const rect=canvas.getBoundingClientRect(),point=window.Wuxing3D?.active?window.Wuxing3D.input(event.clientX,event.clientY):{x:event.clientX-rect.left,y:event.clientY-rect.top},x=point.x,y=point.y;
+    const rect=canvas.getBoundingClientRect(),point=window.Wuxing3D?.active?window.Wuxing3D.input(event.clientX,event.clientY,event.pointerType==="touch"):{x:event.clientX-rect.left,y:event.clientY-rect.top},x=point.x,y=point.y;
     const tower=state.towers.find(item=>{
       const [tx,ty]=MAP.slots[item.slot];return Math.hypot(x-tx*state.width,y-ty*state.height)<Math.max(25,state.width*.04);
     });
@@ -968,7 +979,7 @@
   canvas.addEventListener("pointerdown",event=>{
     if (state.result || state.paused) return;
     hideSkillTooltip();
-    const rect=canvas.getBoundingClientRect(),point=window.Wuxing3D?.active?window.Wuxing3D.input(event.clientX,event.clientY):{x:event.clientX-rect.left,y:event.clientY-rect.top},x=point.x,y=point.y;
+    const rect=canvas.getBoundingClientRect(),point=window.Wuxing3D?.active?window.Wuxing3D.input(event.clientX,event.clientY,event.pointerType==="touch"):{x:event.clientX-rect.left,y:event.clientY-rect.top},x=point.x,y=point.y;
     let nearest=-1,distance=Infinity;
     MAP.slots.forEach((p,i)=>{const d=Math.hypot(x-p[0]*state.width,y-p[1]*state.height);if(d<distance){distance=d;nearest=i;}});
     if(distance>Math.max(28,state.width*.045)){state.selectedTower=null;state.pendingBuildSlot=null;state.previewBuild=null;state.buildElement=null;updateUI();return;}
@@ -998,6 +1009,11 @@
   ui.homeButton.addEventListener("click",showHome);
   ui.fullscreenButton.addEventListener("click",async()=>{
     try {
+      if(window.Capacitor?.isNativePlatform?.() || /Android/.test(navigator.userAgent)&&/wv|Capacitor/i.test(navigator.userAgent)){
+        await screen.orientation?.lock?.("landscape").catch(()=>{});
+        showToast("已锁定横屏全屏");
+        return;
+      }
       if(document.fullscreenElement){await document.exitFullscreen();return;}
       if(!document.documentElement.requestFullscreen){showToast("当前浏览器不支持网页全屏，请用浏览器菜单打开全屏");return;}
       await document.documentElement.requestFullscreen({navigationUI:"hide"});
