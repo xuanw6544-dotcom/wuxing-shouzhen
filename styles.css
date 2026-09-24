@@ -262,7 +262,7 @@ body.three-ready #game-canvas { opacity: 0; }
   .in-battle .brand-block p { margin-top: 2px; }
   .in-battle .command-panel { padding: 8px; }
 }
-@media (orientation: portrait) and (max-width: 680px) {
+@media (orientation: portrait) and (max-width: 680px) and (hover: none) and (pointer: coarse) {
   .rotate-notice { position: fixed; inset: 0; z-index: 100; display: grid; place-content: center; gap: 10px; color: #f8e9bd; background: #10292df2; text-align: center; }
   .rotate-notice span { font-size: 48px; line-height: 1; }
   .rotate-notice strong { font: 700 20px "STKaiti","KaiTi",serif; }
@@ -437,3 +437,4 @@ body.three-ready .core-cancel-button { flex: 0 0 27px; }
   body.three-ready .core-action-avatar { width: 34px; height: 36px; }
   body.three-ready #sell-core-button { min-width: 88px; padding-inline: 8px; }
 }
+
