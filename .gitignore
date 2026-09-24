@@ -1,1 +1,4 @@
 artifacts/
+node_modules/
+www/
+android/
