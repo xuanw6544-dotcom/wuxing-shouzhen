@@ -29,6 +29,7 @@
   };
 
   const ORDER = ["metal", "wood", "water", "fire", "earth"];
+  const AREA_KINDS = new Set(["fire","thunder","bog","mist","lava","steam","rock","mud","ice"]);
   const BASE_COST = 50, CORE_SELL_VALUE = 30;
   let MAP = world.maps.qinglan;
   const menu = { mapId: "qinglan", element: "metal", mode: "endless" };
@@ -42,7 +43,8 @@
     gold: 160, life: 10, wave: 0, waveActive: false, paused: false, result: false,
     initialElement: null, buildElement: null, pendingCore: null, pendingBuildSlot: null, previewBuild: null, droppedElement: null, lootOptions: [],
     selectedTower: null, towers: [], enemies: [], projectiles: [], effects: [], zones: [], inventory: [],
-    spawnQueue: [], spawnTimer: 0, time: 0, kills: 0, coreId: 0, nextWaveReadyAt: 12, waveDrawerOpen: false, waveAutoOpenedFor: 0, dpr: 1, width: 1, height: 1
+    spawnQueue: [], spawnTimer: 0, time: 0, kills: 0, coreId: 0, nextWaveReadyAt: 12, waveDrawerOpen: false, waveAutoOpenedFor: 0,
+    shakeUntil: 0, shakeStrength: 0, dpr: 1, width: 1, height: 1
   };
 
   const ui = {
@@ -437,6 +439,32 @@
       effect: tower.level === 3 ? `纯化·${pureEffects[tower.element]}` : element.effect, kind: tower.element };
   }
 
+  function slotMeta(slot) {
+    const kind=world.slotKind(MAP,slot);
+    return {kind,...world.slotKinds[kind]};
+  }
+  function towerRange(tower) {
+    const terrain=slotMeta(tower.slot);
+    return state.width*(.18+tower.level*.008)*(terrain.range||1);
+  }
+  function terrainDamage(tower,form) {
+    const terrain=slotMeta(tower.slot),elements=[tower.element,tower.secondary];
+    return terrain.earthDamage&&elements.includes("earth")?terrain.earthDamage:1;
+  }
+  function terrainArea(tower,form=towerForm(tower)) {
+    const terrain=slotMeta(tower.slot);
+    return AREA_KINDS.has(form.kind)?terrain.area||1:1;
+  }
+  function routeCoverage(slot,level=1) {
+    const [sx,sy]=MAP.slots[slot],range=towerRange({slot,level});
+    let covered=0,total=0;
+    for(let route=0;route<MAP.routes.length;route++)for(let sample=0;sample<=120;sample++){
+      const point=pointAt(sample/120,route);total++;
+      if(Math.hypot(point.x-sx*state.width,point.y-sy*state.height)<=range)covered++;
+    }
+    return Math.round(covered/Math.max(1,total)*100);
+  }
+
   function damageEnemy(enemy, amount, poisonPierce = false) {
     if (enemy.dead) return;
     let damage = amount * (enemy.vulnerableUntil > state.time ? 1.2 : 1);
@@ -446,6 +474,21 @@
       damage -= poisonPierce ? blocked * .5 : blocked;
     }
     enemy.hp -= Math.max(0, damage);
+  }
+
+  function addCombatFeedback(enemy, amount, counter = false, special = false) {
+    const shown = Math.max(1, Math.round(amount));
+    const lethal = enemy.hp <= 0;
+    enemy.hitFlashUntil = state.time + (lethal ? .22 : .12);
+    state.effects.push({
+      kind: "damage", x: enemy.x, y: enemy.y, value: shown, counter, special, lethal,
+      color: counter ? "#ffe59a" : lethal ? "#ff9b84" : "#f4f1df", life: .72, max: .72
+    });
+    const strength = lethal ? .16 : counter ? .09 : special ? .06 : .025;
+    state.shakeStrength = Math.max(state.shakeStrength, strength);
+    state.shakeUntil = Math.max(state.shakeUntil, state.time + (lethal ? .16 : .09));
+    if (lethal) enemy.feedbackKilled = true;
+    audio.impact?.(counter, special, lethal);
   }
 
   function damageTower(tower, amount, source = "精英") {
@@ -466,10 +509,10 @@
   function addZone(kind, x, y, tower) {
     const existing = state.zones.find(zone => zone.kind === kind && Math.hypot(zone.x-x,zone.y-y) < 24);
     if (existing) { existing.life = Math.max(existing.life, 2.8); return; }
-    state.zones.push({ kind, x, y, radius: kind === "mist" ? 52 : 44, life: 2.8, owner: tower });
+    state.zones.push({ kind, x, y, radius: (kind === "mist" ? 52 : 44)*terrainArea(tower), life: 2.8, owner: tower });
   }
 
-  function fireThunder(tower, primary, damage, startX, startY) {
+  function fireThunder(tower, primary, damage, startX, startY, counter) {
     const targets = [primary];
     while (targets.length < 3) {
       const last = targets.at(-1);
@@ -481,7 +524,9 @@
     }
     const points = [{ x: startX, y: startY }];
     targets.forEach((enemy, index) => {
+      const before = enemy.hp + enemy.shield;
       damageEnemy(enemy, damage * Math.pow(.72, index));
+      addCombatFeedback(enemy, before - enemy.hp - enemy.shield, counter && index === 0, true);
       enemy.burningUntil = Math.max(enemy.burningUntil || 0, state.time + 2.5);
       enemy.burningDps = Math.max(enemy.burningDps || 0, damage * .16);
       if (combatRandom() < .2) enemy.rootUntil = Math.max(enemy.rootUntil, state.time + .45);
@@ -501,7 +546,7 @@
     const base = (13 + tower.level * 8) * (tower.secondary ? 1.12 : 1);
     const counter = elements.some(element => ELEMENTS[element].strong === enemy.element);
     const weak = elements.every(element => ELEMENTS[enemy.element].strong === element);
-    const damage = base * (counter ? (tower.secondary ? 1.65 : 2) : weak ? .55 : 1) * (tower.buffed ? 1.2 : 1);
+    const damage = base * (counter ? (tower.secondary ? 1.65 : 2) : weak ? .55 : 1) * (tower.buffed ? 1.2 : 1) * terrainDamage(tower,form);
     tower.shotCount = (tower.shotCount || 0) + 1;
     const thirdHitKinds = new Set(["bog","mist","lava","steam","mud"]);
     const chanceKinds = new Set(["thunder","spike","blade","rock","ice"]);
@@ -509,14 +554,15 @@
     const special = thirdHitKinds.has(form.kind) ? tower.shotCount%3===0 : chanceKinds.has(form.kind) ? combatRandom()<specialChance : true;
     audio.attack(form.kind, special);
     if (form.kind === "thunder" && special) {
-      fireThunder(tower, enemy, damage, nx * state.width, ny * state.height);
+      fireThunder(tower, enemy, damage, nx * state.width, ny * state.height, counter);
     } else {
       state.projectiles.push({
         x: nx * state.width, y: ny * state.height, target: enemy, element: tower.element,
-        form: form.kind, color: form.color, tower, special, damage, life: 1, trail: []
+        originX: nx * state.width, originY: ny * state.height, bornAt: state.time,
+        form: form.kind, color: form.color, tower, special, counter, weak, damage, life: 1, trail: []
       });
     }
-    tower.cooldown = [1.05,.84,.66][tower.level-1] / (tower.buffed ? 1.15 : 1);
+    tower.cooldown = [1.05,.84,.66][tower.level-1] / ((tower.buffed ? 1.15 : 1)*(slotMeta(tower.slot).speed||1));
   }
 
   function hitEnemy(projectile) {
@@ -524,6 +570,7 @@
     if (enemy.dead) return;
     const kind = projectile.form;
     const tower = projectile.tower;
+    const before = enemy.hp + enemy.shield;
     damageEnemy(enemy, projectile.damage, kind === "bog" || kind === "mist");
     if (kind === "metal" || (kind === "spike" && projectile.special)) {
       enemy.healBlockedUntil = state.time + 2.5;
@@ -535,7 +582,7 @@
       enemy.slowUntil = state.time + (tower.level === 3 ? 2.2 : 1.4);
       if (tower.level === 3) state.enemies.forEach(other => { if(other!==enemy&&Math.hypot(other.x-enemy.x,other.y-enemy.y)<35) other.slowUntil=state.time+1.2; });
     } else if (kind === "fire") {
-      const radius = tower.level === 3 ? 58 : 44;
+      const radius = (tower.level === 3 ? 58 : 44)*terrainArea(tower,{kind});
       state.enemies.forEach(other => { if (!other.dead && other !== enemy && Math.hypot(other.x-enemy.x, other.y-enemy.y) < radius) damageEnemy(other, projectile.damage * .35); });
       state.effects.push({ kind: "blast", x: enemy.x, y: enemy.y, color: "#ff9b45", life: .36, max: .36 });
     } else if (kind === "earth") {
@@ -547,14 +594,14 @@
       damageEnemy(enemy, projectile.damage * enemy.bladeHeat * .18);
       if (enemy.hp < enemy.maxHp * .15) damageEnemy(enemy, enemy.maxHp * .18);
     } else if (kind === "steam" && projectile.special) {
-      state.enemies.forEach(other => { if(!other.dead&&Math.hypot(other.x-enemy.x,other.y-enemy.y)<52){damageEnemy(other,projectile.damage*.45);other.progress=Math.max(0,other.progress-.012);} });
+      state.enemies.forEach(other => { if(!other.dead&&Math.hypot(other.x-enemy.x,other.y-enemy.y)<52*terrainArea(tower,{kind})){damageEnemy(other,projectile.damage*.45);other.progress=Math.max(0,other.progress-.012);} });
       state.effects.push({ kind: "steam", x: enemy.x, y: enemy.y, color: projectile.color, life: .45, max: .45 });
     } else if (kind === "rock" && projectile.special) {
-      state.enemies.forEach(other => { if(!other.dead&&Math.hypot(other.x-enemy.x,other.y-enemy.y)<46){damageEnemy(other,projectile.damage*.35);other.rootUntil=Math.max(other.rootUntil,state.time+.45);} });
+      state.enemies.forEach(other => { if(!other.dead&&Math.hypot(other.x-enemy.x,other.y-enemy.y)<46*terrainArea(tower,{kind})){damageEnemy(other,projectile.damage*.35);other.rootUntil=Math.max(other.rootUntil,state.time+.45);} });
       const [tx,ty]=MAP.slots[tower.slot];state.towers.forEach(other=>{const [ox,oy]=MAP.slots[other.slot];if(Math.hypot((ox-tx)*state.width,(oy-ty)*state.height)<state.width*.24)other.hasteUntil=state.time+2;});
     } else if (kind === "ice" && projectile.special) {
       if (state.time < enemy.frozenUntil) {
-        state.enemies.forEach(other => { if(!other.dead&&other!==enemy&&Math.hypot(other.x-enemy.x,other.y-enemy.y)<48)damageEnemy(other,projectile.damage*.6); });
+        state.enemies.forEach(other => { if(!other.dead&&other!==enemy&&Math.hypot(other.x-enemy.x,other.y-enemy.y)<48*terrainArea(tower,{kind}))damageEnemy(other,projectile.damage*.6); });
         enemy.frozenUntil = 0;
         state.effects.push({ kind: "freeze", x: enemy.x, y: enemy.y, color: projectile.color, life: .55, max: .55 });
       } else {
@@ -564,6 +611,7 @@
       }
     }
     if (enemy.elite && enemy.element === "metal" && enemy.shield > 0) damageTower(tower, enemy.boss ? 5 : 2, "金系反震");
+    addCombatFeedback(enemy, before - enemy.hp - enemy.shield, projectile.counter, projectile.special);
     state.effects.push({ kind: "impact", x: enemy.x, y: enemy.y, color: projectile.color, life: .28, max: .28 });
   }
 
@@ -607,7 +655,10 @@
 
   function updateElite(enemy) {
     if (!enemy.elite) return;
-    if (!enemy.casting && state.time >= enemy.nextSkillAt - 1) enemy.casting = true;
+    if (!enemy.casting && state.time >= enemy.nextSkillAt - 1) {
+      enemy.casting = true;
+      audio.cue("warning");
+    }
     if (enemy.casting && state.time >= enemy.nextSkillAt) {
       enemy.casting = false;
       useEliteSkill(enemy);
@@ -618,6 +669,12 @@
 
   function defeatEnemy(enemy) {
     enemy.dead = true;
+    if (!enemy.feedbackKilled) {
+      state.effects.push({ kind: "defeat", x: enemy.x, y: enemy.y, color: ELEMENTS[enemy.element].color, life: .45, max: .45 });
+      state.shakeStrength = Math.max(state.shakeStrength, enemy.boss ? .22 : enemy.elite ? .14 : .06);
+      state.shakeUntil = Math.max(state.shakeUntil, state.time + (enemy.boss ? .24 : .12));
+      audio.impact?.(false, enemy.elite, true);
+    }
     state.kills++;
     if(enemy.elite)state.commanderKilled=true;
     state.gold += enemy.boss ? 180 : enemy.elite ? 45 : 12;
@@ -704,7 +761,7 @@
       }
       if (tower.cooldown > 0 || tower.disabledUntil > state.time || tower.vineUntil > state.time) continue;
       const [sx, sy] = MAP.slots[tower.slot];
-      const range = state.width * (.18 + tower.level * .008);
+      const range = towerRange(tower);
       const target = state.enemies.filter(e => !e.dead && Math.hypot(e.x-sx*state.width,e.y-sy*state.height) < range)
         .sort((a,b) => b.progress-a.progress)[0];
       if (target) shoot(tower, target);
@@ -781,7 +838,7 @@
     if(!preview||state.towers.some(t=>t.slot===preview.slot))return;
     const [px,py]=MAP.slots[preview.slot],x=px*w,y=py*h,form=towerForm({element:preview.element,secondary:null,level:1});
     ctx.save();ctx.globalAlpha=.62;
-    ctx.beginPath();ctx.arc(x,y,w*.18,0,Math.PI*2);ctx.fillStyle="rgba(226,211,153,.08)";ctx.fill();ctx.strokeStyle=form.color;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();ctx.arc(x,y,towerRange({slot:preview.slot,level:1}),0,Math.PI*2);ctx.fillStyle="rgba(226,211,153,.08)";ctx.fill();ctx.strokeStyle=form.color;ctx.lineWidth=1.5;ctx.stroke();
     art.tower(ctx,form.kind,x,y,Math.max(19,w*.035),state.time,1,false);
     ctx.globalAlpha=1;ctx.fillStyle="#173638e8";ctx.fillRect(x-45,y+31,90,19);ctx.fillStyle="#f4e6b7";ctx.font="600 10px Microsoft YaHei";ctx.textAlign="center";ctx.fillText("再次点击确认",x,y+44);ctx.restore();
   }
@@ -794,7 +851,7 @@
     });
     state.towers.forEach(t=>{
       const [px,py]=MAP.slots[t.slot],x=px*w,y=py*h,r=Math.max(17,w*.027),form=towerForm(t);
-      if (state.selectedTower===t) { ctx.beginPath();ctx.arc(x,y,w*(.18+t.level*.008),0,Math.PI*2);ctx.fillStyle="rgba(237,221,170,.035)";ctx.fill();ctx.strokeStyle="rgba(237,221,170,.25)";ctx.stroke(); }
+      if (state.selectedTower===t) { ctx.beginPath();ctx.arc(x,y,towerRange(t),0,Math.PI*2);ctx.fillStyle="rgba(237,221,170,.035)";ctx.fill();ctx.strokeStyle="rgba(237,221,170,.25)";ctx.stroke(); }
       if (t.buffed) { ctx.beginPath();ctx.arc(x,y,r+7,0,Math.PI*2);ctx.strokeStyle="#e9cf73";ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]); }
       const kick=t.lastShotAt===undefined?0:Math.max(0,1-(state.time-t.lastShotAt)/.18)*2;
       art.tower(ctx,form.kind,x,y-kick,Math.max(19,w*.035),state.time,t.level,t.hp<=0);
@@ -822,7 +879,7 @@
       if(enemy.shield>0){ctx.beginPath();ctx.arc(enemy.x,enemy.y,r+5,0,Math.PI*2);ctx.strokeStyle="rgba(236,218,147,.75)";ctx.lineWidth=2;ctx.stroke();}
       if(enemy.poisonStacks>0){ctx.fillStyle=FUSIONS["wood-water"].color;ctx.font="700 9px Microsoft YaHei";ctx.fillText(`毒${enemy.poisonStacks}`,enemy.x,enemy.y+r+12);}
       if(state.time<enemy.frozenUntil){ctx.strokeStyle=FUSIONS["metal-water"].color;ctx.lineWidth=3;ctx.strokeRect(enemy.x-r-3,enemy.y-r-3,(r+3)*2,(r+3)*2);}
-      if(enemy.casting){const remain=Math.max(0,enemy.nextSkillAt-state.time);ctx.beginPath();ctx.arc(enemy.x,enemy.y,r+10,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-remain));ctx.strokeStyle="#fff0a8";ctx.lineWidth=3;ctx.stroke();}
+      if(enemy.casting){const remain=Math.max(0,enemy.nextSkillAt-state.time);ctx.beginPath();ctx.arc(enemy.x,enemy.y,r+10,-Math.PI/2,-Math.PI/2+Math.PI*2*(1-remain));ctx.strokeStyle="#fff0a8";ctx.lineWidth=3;ctx.stroke();ctx.fillStyle="#fff0a8";ctx.font="700 9px Microsoft YaHei";ctx.fillText("蓄力",enemy.x,enemy.y-r-22);}
     });
   }
 
@@ -854,7 +911,11 @@
   function drawEffects() {
     state.effects.forEach(e=>{
       const t=1-e.life/e.max;ctx.globalAlpha=1-t;
-      if(e.kind==="lightning"){
+      if(e.kind==="damage"){
+        const rise=t*24;ctx.textAlign="center";ctx.font=`${e.counter||e.lethal?"800":"700"} ${e.counter?15:12}px Microsoft YaHei`;
+        ctx.lineWidth=3;ctx.strokeStyle="rgba(20,38,39,.85)";ctx.strokeText(`${e.counter?"克制 ":""}${e.value}`,e.x,e.y-18-rise);
+        ctx.fillStyle=e.color;ctx.fillText(`${e.counter?"克制 ":""}${e.value}`,e.x,e.y-18-rise);
+      }else if(e.kind==="lightning"){
         ctx.strokeStyle=e.color;ctx.lineWidth=5*(1-t)+1;ctx.shadowColor=e.color;ctx.shadowBlur=12;ctx.beginPath();
         e.points.forEach((point,index)=>{if(!index)ctx.moveTo(point.x,point.y);else{const previous=e.points[index-1];ctx.lineTo((previous.x+point.x)/2+Math.sin(state.time*80+index)*8,(previous.y+point.y)/2);ctx.lineTo(point.x,point.y);}});ctx.stroke();ctx.shadowBlur=0;
         e.columns.forEach((point,index)=>{ctx.beginPath();ctx.moveTo(point.x+Math.sin(state.time*70+index)*5,Math.max(0,point.y-58));ctx.lineTo(point.x-5,point.y-28);ctx.lineTo(point.x+3,point.y);ctx.stroke();});ctx.shadowBlur=0;
@@ -862,7 +923,7 @@
         ctx.fillStyle=e.color;for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(e.x-8+i*8,e.y-15-Math.sin(state.time*8+i)*7,3+i,0,Math.PI*2);ctx.fill();}
       }else if(e.kind==="freeze"){
         ctx.strokeStyle=e.color;ctx.lineWidth=2;for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+Math.cos(a)*(12+t*18),e.y+Math.sin(a)*(12+t*18));ctx.stroke();}
-      }else if(e.kind==="blast"){
+      }else if(e.kind==="blast"||e.kind==="defeat"){
         ctx.fillStyle=e.color;ctx.beginPath();ctx.arc(e.x,e.y,5+t*28,0,Math.PI*2);ctx.fill();
       }else{
         ctx.beginPath();ctx.arc(e.x,e.y,5+t*(e.kind==="skill"?34:24),0,Math.PI*2);ctx.strokeStyle=e.color;ctx.lineWidth=e.kind==="skill"?4:2;ctx.stroke();
@@ -914,9 +975,9 @@
       const thirdHit=["bog","mist","lava","steam","mud"].includes(form.kind);
       const chance=["thunder","spike","blade","rock","ice"].includes(form.kind);
       const trigger=thirdHit?" · 每第三击触发":chance?` · ${75+(t.level-1)*7}%触发`:"";
-      const attack=(13+t.level*8)*(t.secondary?1.12:1)*(t.buffed?1.2:1),interval=[1.05,.84,.66][t.level-1]/(t.buffed?1.15:1);
+      const terrain=slotMeta(t.slot),attack=(13+t.level*8)*(t.secondary?1.12:1)*(t.buffed?1.2:1)*terrainDamage(t,form),interval=[1.05,.84,.66][t.level-1]/((t.buffed?1.15:1)*(terrain.speed||1));
       ui.selectedAttack.textContent=Math.round(attack);ui.selectedSpeed.textContent=`${interval.toFixed(2)}s`;ui.selectedDps.textContent=Math.round(attack/interval);ui.selectedHealth.textContent=`${Math.ceil(t.hp)}/${t.maxHp}`;
-      ui.selectedDetail.textContent=`${elementNames} · ${form.effect}${trigger}${t.burnUntil>state.time?" · 灼烧减速":""}${t.buffed?" · 威力提升":""}`;
+      ui.selectedDetail.textContent=`${terrain.name}·${terrain.short} · ${elementNames} · ${form.effect}${trigger}${t.burnUntil>state.time?" · 灼烧减速":""}${t.buffed?" · 威力提升":""}`;
       if(ui.selectedAvatar.dataset.kind!==form.kind){ui.selectedAvatar.replaceChildren();art.decorate(ui.selectedAvatar,form.kind,"selected-art");ui.selectedAvatar.dataset.kind=form.kind;}
       ui.sell.textContent=`出售 +${Math.floor(t.invested*.65)}`;
       ui.upgrade.textContent=t.level>=3?"已至叁阶":`升级 ${upgradeCost}`;
@@ -942,7 +1003,7 @@
   function reset() {
     audio.setPaused(false);
     ui.pause.textContent="Ⅱ";ui.pause.setAttribute("aria-label","暂停");
-    Object.assign(state,{gold:160,life:10,wave:0,waveActive:false,paused:false,result:false,initialElement:null,buildElement:null,pendingCore:null,pendingBuildSlot:null,previewBuild:null,droppedElement:null,lootOptions:[],selectedTower:null,towers:[],enemies:[],projectiles:[],effects:[],zones:[],inventory:[],spawnQueue:[],spawnTimer:0,time:0,kills:0,coreId:0,nextWaveReadyAt:12,waveDrawerOpen:false,waveAutoOpenedFor:0});
+    Object.assign(state,{gold:160,life:10,wave:0,waveActive:false,paused:false,result:false,initialElement:null,buildElement:null,pendingCore:null,pendingBuildSlot:null,previewBuild:null,droppedElement:null,lootOptions:[],selectedTower:null,towers:[],enemies:[],projectiles:[],effects:[],zones:[],inventory:[],spawnQueue:[],spawnTimer:0,time:0,kills:0,coreId:0,nextWaveReadyAt:12,waveDrawerOpen:false,waveAutoOpenedFor:0,shakeUntil:0,shakeStrength:0});
     MAP=world.maps[menu.mapId];state.mapId=menu.mapId;state.runMode=menu.mode;state.combatTime=0;state.lootHistory=[];state.commanderKilled=false;
     state.runSeed=menu.mode==="trial"?`${menu.mapId}:trial:1`:`${menu.mapId}:${Date.now()}:${Math.random()}`;
     lootRandom=world.random(`${state.runSeed}:loot`);combatRandom=world.random(`${state.runSeed}:combat`);
@@ -987,8 +1048,9 @@
     if(tower){if(state.pendingCore)useCoreAtSlot(nearest);else selectTower(tower);return;}
     if(state.previewBuild?.slot===nearest){if(state.pendingCore)useCoreAtSlot(nearest);else buildTower(nearest,state.previewBuild.element);return;}
     state.selectedTower=null;state.pendingBuildSlot=nearest;ui.selection.dataset.anchor="";
-    if(state.pendingCore){state.previewBuild={slot:nearest,element:state.pendingCore.element,core:state.pendingCore};ui.hint.textContent=`预览${ELEMENTS[state.pendingCore.element].name}塔：再次点击阵位确认`;}
-    else{state.previewBuild=null;state.buildElement=null;ui.cards.forEach(card=>card.classList.remove("selected"));ui.hint.textContent="阵位已选：从下方选择元素塔";}
+    const terrain=slotMeta(nearest),coverage=routeCoverage(nearest);
+    if(state.pendingCore){state.previewBuild={slot:nearest,element:state.pendingCore.element,core:state.pendingCore};ui.hint.textContent=`${terrain.name} · ${terrain.short} · 路线覆盖 ${coverage}% · 再次点击确认`;}
+    else{state.previewBuild=null;state.buildElement=null;ui.cards.forEach(card=>card.classList.remove("selected"));ui.hint.textContent=`${terrain.name} · ${terrain.short} · 路线覆盖 ${coverage}%` ;}
     updateUI();
   });
 
@@ -999,7 +1061,8 @@
     state.pendingCore=null;renderInventory();
     state.previewBuild={slot:state.pendingBuildSlot,element:state.buildElement,core:null};
     ui.cards.forEach(c=>c.classList.toggle("selected",c===card));
-    ui.hint.textContent=`${ELEMENTS[state.buildElement].name}塔预览中，再次点击阵位确认`;updateUI();
+    const terrain=slotMeta(state.pendingBuildSlot),coverage=routeCoverage(state.pendingBuildSlot);
+    ui.hint.textContent=`${terrain.name} · ${terrain.short} · 路线覆盖 ${coverage}% · 再次点击确认`;updateUI();
   }));
   ui.waveMini.addEventListener("click",()=>setWaveDrawer(!state.waveDrawerOpen));
   ui.waveClose.addEventListener("click",()=>setWaveDrawer(false));
@@ -1054,7 +1117,7 @@
   window.addEventListener("resize",()=>{resize();updateSynergy();});
 
   // The optional Three.js renderer reads this stable view without owning any game rules.
-  window.WuxingGame = { state, getMap: () => MAP, getTowerForm: towerForm };
+  window.WuxingGame = { state, getMap: () => MAP, getTowerForm: towerForm, getSlotMeta: slotMeta, getTowerRange: towerRange, getRouteCoverage: routeCoverage };
 
   let last=performance.now();
   function loop(now){const dt=Math.min((now-last)/1000,.05);last=now;if(state.scene==="battle"){update(dt);draw();}requestAnimationFrame(loop);}

@@ -5,7 +5,7 @@ const { chromium } = require('playwright-core');
 const world = require('../world.js');
 const root = path.resolve(__dirname, '..');
 for (const map of Object.values(world.maps)) {
-  assert.equal(map.slots.length, 8);
+  assert(map.slots.length >= 8, `${map.name} must provide at least eight build slots`);
   assert.equal(map.routes.length, map.entryNames.length);
   assert.equal(new Set([10,20,30,40,50].map(w=>world.wavePlan(map,w).element)).size,5);
   for(let w=1;w<=60;w++) {
@@ -72,7 +72,7 @@ for(let i=0;i<100;i++)assert.equal(a(),b());
     await page.setViewportSize({width:844,height:390});
     await page.evaluate(()=>{__qa.state.result=false;document.getElementById('result-panel').classList.add('hidden');__qa.showBattle();__qa.showLoot();});
     const lootBox=await page.locator('#loot-panel').boundingBox();
-    assert(lootBox&&lootBox.x>=0&&lootBox.x+lootBox.width<=844&&lootBox.height<=346,'loot overlay stays inside the horizontal battlefield');
+    assert(lootBox&&lootBox.x>=0&&lootBox.x+lootBox.width<=844&&lootBox.y>=0&&lootBox.y+lootBox.height<=390,'loot overlay stays inside the horizontal battlefield');
     assert.equal(await page.locator('#element-inventory > *').count(),6);
     await page.screenshot({path:path.join(root,'artifacts','loot-overlay-844.png')});
     const goldBeforeSale=await page.evaluate(()=>__qa.state.gold);

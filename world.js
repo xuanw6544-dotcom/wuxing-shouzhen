@@ -2,27 +2,36 @@
 (() => {
   "use strict";
   const elements = ["metal", "wood", "water", "fire", "earth"];
+  const slotKinds = {
+    high: { name: "高台", short: "射程 +18%", range: 1.18 },
+    spring: { name: "灵泉", short: "攻速 +15%", speed: 1.15 },
+    ley: { name: "地脉", short: "土系伤害 +25%", earthDamage: 1.25 },
+    choke: { name: "狭道", short: "范围 +22%", area: 1.22 }
+  };
   const maps = {
     qinglan: {
-      id: "qinglan", name: "青岚古阵", category: "折返山道", summary: "单路折返 · 均衡布阵", theme: "jade",
+      id: "qinglan", name: "青岚古阵", category: "折返山道", summary: "单路折返 · 高台控道", theme: "jade", feature: "ridge",
       description: "山道数次折返，十二处阵位可灵活布置。", entryNames: ["西侧山门"],
       routes: [[[-.03,.24],[.18,.24],[.18,.65],[.39,.65],[.39,.36],[.61,.36],[.61,.73],[.81,.73],[.81,.24],[1.04,.24]]],
-      slots: [[.09,.47],[.28,.47],[.29,.82],[.5,.58],[.5,.18],[.71,.5],[.71,.86],[.91,.49], [.1,.82],[.35,.13],[.57,.84],[.9,.78]]
+      slots: [[.09,.47],[.28,.47],[.29,.82],[.5,.58],[.5,.18],[.71,.5],[.71,.86],[.91,.49], [.1,.82],[.35,.13],[.57,.84],[.9,.78]],
+      slotTypes: ["high","choke","spring","ley","high","choke","spring","high","ley","high","spring","choke"]
     },
     shuangxi: {
-      id: "shuangxi", name: "双溪峡谷", category: "双路汇流", summary: "双口进攻 · 末端合流", theme: "river",
+      id: "shuangxi", name: "双溪峡谷", category: "双路汇流", summary: "双口进攻 · 灵泉竞速", theme: "river", feature: "gorge",
       description: "上下两路穿过峡谷，在东侧汇合；十二处阵位可分配火力。", entryNames: ["上游栈桥", "下游渡口"],
       routes: [
         [[-.03,.25],[.19,.25],[.19,.48],[.42,.48],[.42,.31],[.64,.31],[.64,.5],[.82,.5],[.82,.27],[1.04,.27]],
         [[-.03,.76],[.3,.76],[.3,.59],[.52,.59],[.52,.78],[.64,.78],[.64,.5],[.82,.5],[.82,.27],[1.04,.27]]
       ],
-      slots: [[.09,.42],[.29,.32],[.09,.61],[.4,.83],[.53,.43],[.72,.65],[.73,.28],[.91,.44], [.24,.13],[.47,.18],[.53,.9],[.88,.8]]
+      slots: [[.09,.42],[.29,.32],[.09,.61],[.4,.83],[.53,.43],[.72,.65],[.73,.28],[.91,.44], [.24,.13],[.47,.18],[.53,.9],[.88,.8]],
+      slotTypes: ["spring","high","spring","ley","choke","spring","high","choke","high","spring","ley","high"]
     },
     huihuan: {
-      id: "huihuan", name: "回环遗迹", category: "回环内阵", summary: "环绕路线 · 中央火力", theme: "ruins",
+      id: "huihuan", name: "回环遗迹", category: "回环内阵", summary: "环绕路线 · 狭道爆发", theme: "ruins", feature: "ruins",
       description: "来敌绕行残垣，十二处阵位覆盖多段路径。", entryNames: ["西侧残垣"],
       routes: [[[-.03,.24],[.28,.24],[.28,.72],[.7,.72],[.7,.32],[.48,.32],[.48,.51],[.86,.51],[.86,.24],[1.04,.24]]],
-      slots: [[.13,.4],[.15,.65],[.39,.42],[.59,.61],[.6,.19],[.4,.85],[.8,.77],[.94,.41], [.08,.86],[.3,.16],[.73,.12],[.91,.8]]
+      slots: [[.13,.4],[.15,.65],[.39,.42],[.59,.61],[.6,.19],[.4,.85],[.8,.77],[.94,.41], [.08,.86],[.3,.16],[.73,.12],[.91,.8]],
+      slotTypes: ["choke","spring","choke","ley","high","spring","choke","high","ley","high","spring","choke"]
     },
     wuxingchi: {
       id: "wuxingchi", name: "五行天池", category: "中央阵眼", summary: "双路环池 · 阵眼争夺", theme: "array", feature: "array",
@@ -31,7 +40,8 @@
         [[-.03,.22],[.18,.22],[.18,.39],[.36,.39],[.36,.28],[.64,.28],[.64,.39],[.82,.39],[.82,.22],[1.03,.22]],
         [[-.03,.78],[.18,.78],[.18,.61],[.36,.61],[.36,.72],[.64,.72],[.64,.61],[.82,.61],[.82,.78],[1.03,.78]]
       ],
-      slots: [[.09,.34],[.09,.66],[.25,.31],[.25,.69],[.36,.18],[.36,.82],[.5,.22],[.5,.78],[.64,.18],[.64,.82],[.75,.31],[.75,.69],[.91,.34],[.91,.66]]
+      slots: [[.09,.34],[.09,.66],[.25,.31],[.25,.69],[.36,.18],[.36,.82],[.5,.22],[.5,.78],[.64,.18],[.64,.82],[.75,.31],[.75,.69],[.91,.34],[.91,.66]],
+      slotTypes: ["high","high","spring","spring","ley","ley","choke","choke","ley","ley","spring","spring","high","high"]
     }
   };
   function wavePlan(map, waveNo) {
@@ -70,7 +80,8 @@
     for(const ch of String(seed))value=Math.imul(value^ch.charCodeAt(0),16777619);
     return ()=>{value=(Math.imul(1664525,value)+1013904223)>>>0;return value/4294967296;};
   }
-  const api={maps,wavePlan,pointAt,random};
+  function slotKind(map,index){return map.slotTypes?.[index]||"high";}
+  const api={maps,slotKinds,slotKind,wavePlan,pointAt,random};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else window.GameWorld=api;
 })();
