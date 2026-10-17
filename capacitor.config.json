@@ -1,0 +1,8 @@
+{
+  "appId": "com.wuxing.shouzhen",
+  "appName": "五行守阵",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

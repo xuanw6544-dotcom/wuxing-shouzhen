@@ -96,12 +96,13 @@ async function main() {
       assert(await page.locator('#wave-drawer').isHidden(),'wave details stay collapsed by default');
       await page.waitForTimeout(1900);
       if(width===1280) await page.screenshot({ path: path.join(output, 'context-default-1280.png') });
-      await page.mouse.click(box.x+.09*box.width,box.y+.47*box.height);
+      const firstSlot=await page.evaluate(()=>window.Wuxing3D?.projectSlot(0));
+      await page.mouse.click(firstSlot.x,firstSlot.y);
       assert(await page.locator('.command-panel').evaluate(el=>el.classList.contains('build-mode')),'empty slot focuses the candidate dock');
       if(width===1280) await page.screenshot({ path: path.join(output, 'context-empty-slot-1280.png') });
       await page.locator('.tower-card.water').click();
-      await page.mouse.click(box.x+.09*box.width,box.y+.47*box.height);
-      await page.mouse.click(box.x+.09*box.width,box.y+.47*box.height);
+      await page.mouse.click(firstSlot.x,firstSlot.y);
+      await page.mouse.click(firstSlot.x,firstSlot.y);
       assert(await page.locator('#selection-panel').isVisible(),'existing tower reveals contextual actions');
       if(await page.locator('#wave-drawer').isVisible()) await page.locator('#wave-close-button').click();
       await page.mouse.move(box.x+.5*box.width,20);
@@ -138,7 +139,7 @@ async function main() {
       assert.deepEqual(clipped, [], 'buttons must fit their labels');
       await page.close();
     }
-    const portrait=await browser.newPage({viewport:{width:390,height:844}});
+    const portrait=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
     await portrait.goto(pathToFileURL(path.join(root,'index.html')).href);
     assert(await portrait.locator('.rotate-notice').isVisible(),'portrait requests landscape orientation');
     await portrait.screenshot({path:path.join(output,'rotate-390.png')});

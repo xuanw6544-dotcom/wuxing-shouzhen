@@ -1,1 +1,6 @@
 artifacts/
+node_modules/
+www/
+android/
+.installers/
+.tools/

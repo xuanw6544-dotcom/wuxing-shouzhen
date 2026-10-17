@@ -1,0 +1,15 @@
+# Five-Element Sanctuary Home Art
+
+Runtime asset: `sanctuary-v1.webp` (1672 x 941, 543570 bytes).
+Generated with the built-in image generation tool; encoded as WebP at quality 88.
+The title, entry button and resume control remain live HTML, not baked into the art.
+
+Original output:
+`exec-52986fa8-304a-4dbd-a8b2-22ef5e026c30.png` (retained in the local generation archive).
+
+Reference: the user-approved five-element altar generated in the same conversation,
+`exec-c593aa07-885a-42f8-b706-cc077af6ddbd.png` in that directory.
+
+## Generation Prompt
+
+Use case: stylized-concept. Asset type: production-quality full-bleed landscape 16:9 background illustration for the actual title screen of Chinese fantasy strategy game Wuxing Shouzhen. Input image is a STYLE AND SUBJECT REFERENCE: preserve its beautiful crafted five-element altar identity, stone carving, gold-bronze detailing, elemental tree crystal / swords / fire brazier / water crystal / mountain stone. Integrate a similarly designed altar naturally into a complete breathtaking Chinese xianxia floating-mountain sanctuary environment, not a cutout pasted over a background. This is a finished environment illustration WITHOUT ANY UI OR TEXT. Composition: landscape 16:9 wide image. Camera three-quarter elevated view onto a circular ancient stone sanctuary at the center, altar centered at approximately x=53%, y=57%, the whole altar taking about 42% of image width and 53% image height, all five elemental towers clearly distinct, entire platform visible and coherent perspective. A short stone stairway descends toward bottom center. A refined teal-tile and bronze ancient Chinese mountain gateway stands behind the altar around upper center, not obstructing the towers. Foreground weathered carved stone and elegant pine branches at the extreme lower corners frame the scene. Surrounding landscape: sculptural green mountain pillars above a vast pale blue sea of clouds, long narrow waterfalls, small distant temples, warm morning light from upper right, blue-green distance with airy ivory clouds, visible rich foliage. Color balance luminous cyan and jade landscape, warm ivory sunlight, bronze-gold architectural details, restrained five-color elemental light. KEEP LEFT UPPER QUARTER (x 5%-35%, y 10%-36%) calm, medium-dark desaturated teal mist/mountain tones with no bright details to support live ivory title lettering. KEEP bottom central 12% relatively simple darker stone/cloud shaded area for live entry button. No baked text, symbols that look like text, no border, no title, no typography, no buttons, no interface, no watermark, no people, no characters. Polished high-end Chinese fantasy 3D-game key art with hand-painted material detail, convincing volumetric depth and lighting, finely carved ornament, detailed stone texture and aged bronze, clean forms, beautiful controlled detail, readable mobile framing. Avoid flat vector geometry, simplistic low-poly, excessive bloom, gaudy neon, all-over dark brown or purple, artificial bokeh dots. The altar is the visual heart, environment enhances it. Full scene edge-to-edge, not split layout, not panels, no empty blank background.

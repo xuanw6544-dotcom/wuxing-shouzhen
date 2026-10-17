@@ -1,0 +1,184 @@
+/* Generated sanctuary art; all interaction remains in the existing menu. */
+.at-home .home-hero {
+  isolation: isolate;
+  background: #244a50 url("assets/home/sanctuary-v1.webp") center / cover no-repeat;
+}
+
+.at-home .home-background { pointer-events: none; }
+.at-home .home-hero::before {
+  z-index: 1;
+  background: linear-gradient(90deg, #09262c42, transparent 38%),
+    linear-gradient(0deg, #071a245e, transparent 17%);
+}
+.at-home .home-hero::after { display: none; }
+
+.at-home .home-title {
+  top: calc(var(--safe-top) + 7%);
+  left: calc(var(--safe-left) + 4.8%);
+  max-width: calc(100% - var(--safe-left) - var(--safe-right) - 80px);
+  color: #fff4d3;
+  text-shadow: 0 2px 10px #092532;
+}
+.at-home .home-title p {
+  width: fit-content;
+  margin: 0 0 14px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #d9c29288;
+  color: #e6d3a6;
+  font-size: 12px;
+  font-weight: 400;
+}
+.at-home .home-title h2 {
+  margin: 0 0 11px;
+  color: #fff0c7;
+  font-size: 72px;
+  line-height: 1.1;
+  text-shadow: 0 2px 0 #7c6a46, 0 5px 18px #0b243080;
+}
+.at-home .home-title > span { color: #e2e8df; font-size: 15px; line-height: 1.5; }
+.at-home .hero-inscription { display: none; }
+.at-home .hero-seal {
+  top: calc(var(--safe-top) + 26px);
+  right: calc(var(--safe-right) + 28px);
+  padding: 13px 8px;
+  border: 1px solid #ead09a99;
+  border-radius: 0 0 3px 3px;
+  background: #28483edf;
+  color: #f9e8bc;
+  box-shadow: inset 0 0 0 3px #182f2a66, 0 4px 16px #0b29374d;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.at-home .landing-actions {
+  bottom: calc(var(--safe-bottom) + 4%);
+  align-items: center;
+  gap: 12px;
+}
+.at-home .start-button {
+  min-width: 212px;
+  min-height: 52px;
+  padding: 10px 28px;
+  border: 1px solid #e8ce92;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #315b50f5, #153d39fa);
+  color: #fff0c6;
+  font: 700 20px "STKaiti", "KaiTi", serif;
+  text-shadow: 0 2px 4px #061b23;
+  box-shadow: inset 0 1px #f3e2a842, inset 0 -3px #091f25a6, 0 6px 22px #071c2770;
+  transition: background 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+.at-home .start-button::after { inset: 4px; border-color: #d9c18955; }
+.at-home .start-button:hover:not(:disabled) {
+  background: linear-gradient(180deg, #416e5e, #235147);
+  border-color: #fff0b5;
+  box-shadow: inset 0 1px #f3e2a842, 0 5px 24px #061b2780;
+  filter: none;
+}
+.at-home .start-button:active { box-shadow: inset 0 2px 10px #061b2780; }
+.at-home .ghost-button {
+  min-width: 120px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-color: #e1c997a6;
+  color: #f3e4c0;
+  background: #143a39e8;
+  font-size: 14px;
+}
+
+@media (max-height: 600px) {
+  .at-home .home-title h2 { font-size: 54px; }
+}
+@media (orientation: landscape) and (max-height: 430px) {
+  .at-home .home-title { top: calc(var(--safe-top) + 19px); left: calc(var(--safe-left) + 24px); }
+  .at-home .home-title p { margin-bottom: 10px; padding-bottom: 7px; font-size: 10px; }
+  .at-home .home-title h2 { margin-bottom: 7px; font-size: 40px; }
+  .at-home .home-title > span { font-size: 12px; }
+  .at-home .hero-seal { top: calc(var(--safe-top) + 17px); right: calc(var(--safe-right) + 20px); padding: 8px 6px; font-size: 12px; }
+  .at-home .landing-actions { bottom: calc(var(--safe-bottom) + 12px); }
+  .at-home .start-button { min-width: 166px; min-height: 44px; padding: 8px 20px; font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .at-home .start-button { transition: none; }
+}
+
+/* The selection rooms share the sanctuary's stone, cloud and bronze palette. */
+.at-home .home-setup {
+  background: linear-gradient(100deg, #102f34ed, #153a3de6),
+    url("assets/home/sanctuary-v1.webp") center / cover no-repeat;
+}
+.at-home .home-setup::before { border-color: #d1b57538; inset: 8px; }
+.at-home .setup-heading { gap: 12px; }
+.at-home .setup-heading p { color: #cfb77c; font-size: 10px; }
+.at-home .setup-heading h2 { color: #fff0c7; font-size: 30px; }
+.at-home .mode-switch { border-color: #c1a86c88; border-radius: 3px; background: #081e27a6; }
+.at-home .mode-switch button { min-height: 36px; padding: 6px 13px; font-size: 12px; }
+.at-home .mode-switch button[aria-pressed="true"] { color: #fff2c5; background: #42665a; }
+
+.at-home .map-choices { gap: 14px; }
+.at-home .map-choices button {
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  padding-bottom: 12px;
+  border: 1px solid #a5b4a477;
+  border-radius: 4px;
+  background: #112d30f5;
+  box-shadow: 0 8px 22px #06151b66;
+  transition: border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+.at-home .map-choices button::after { display: none; }
+.at-home .map-choices button:hover { transform: none; filter: none; border-color: #dfc58b; }
+.at-home .map-choices button[aria-pressed="true"] {
+  border-color: #f0d294;
+  box-shadow: 0 0 0 2px #947b4e, 0 9px 26px #03171b88;
+  background: #214138f5;
+}
+.map-media { position: relative; align-self: stretch; min-height: 0; overflow: hidden; background: #244849; }
+.map-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #071e2af5, #0b293a33 32%, transparent 55%);
+  pointer-events: none;
+}
+.map-art { display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.at-home .map-choices .map-route {
+  position: absolute;
+  z-index: 1;
+  bottom: 7px;
+  left: 9px;
+  width: calc(100% - 18px);
+  height: 28%;
+  min-height: 52px;
+  max-height: 100px;
+  border: 0;
+  filter: none;
+  opacity: .9;
+  pointer-events: none;
+}
+.at-home .map-choices strong { margin: 12px 14px 4px; font-size: 22px; color: #f9e9bc; }
+.at-home .map-choices span { margin: 0 14px; color: #c2d1c5; font-size: 11px; line-height: 1.5; }
+.at-home .map-record { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 3px 14px; color: #d1dacb; font-size: 11px; }
+.at-home .map-record p { min-width: 0; margin: 0; }
+.at-home .map-record p:nth-child(2) { text-align: right; }
+.at-home .map-record small { color: #9db3a8; }
+.at-home .step-actions .primary-button { min-height: 42px; border-color: #d8bc7f; }
+.at-home .step-actions .text-button { min-height: 38px; color: #e9dbb9; border-color: #b99d6688; background: #132e31aa; }
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .at-home .setup-heading { min-height: 38px; }
+  .at-home .setup-heading h2 { font-size: 24px; }
+  .at-home .map-choices { gap: 9px; }
+  .at-home .map-choices button { padding-bottom: 8px; }
+  .at-home .map-choices strong { margin: 7px 9px 3px; font-size: 18px; }
+  .at-home .map-choices span { margin-inline: 9px; font-size: 10px; }
+  .at-home .map-record { font-size: 10px; line-height: 1.4; }
+  .at-home .map-record small { display: none; }
+  .at-home .step-actions .primary-button { min-height: 38px; }
+  .at-home .step-actions .text-button { min-height: 34px; }
+  .at-home .mode-switch button { min-height: 32px; padding: 5px 9px; font-size: 11px; }
+}
+@media (max-width: 700px) and (orientation: landscape) {
+  .at-home .map-choices { gap: 7px; }
+  .at-home .map-choices strong { margin-inline: 7px; font-size: 17px; }
+  .at-home .map-choices span { margin-inline: 7px; font-size: 9px; }
+}

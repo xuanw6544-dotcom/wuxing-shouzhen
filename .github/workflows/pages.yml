@@ -23,12 +23,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare game runtime
+        run: node scripts/prepare-mobile.cjs
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload game
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: www
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5

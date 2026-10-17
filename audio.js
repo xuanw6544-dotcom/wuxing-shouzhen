@@ -13,7 +13,7 @@
     }
   } catch { /* Storage can be unavailable in private or local-file sessions. */ }
   let context, master, music, effects, noiseBuffer, compressor;
-  let nextBeat = 0, beat = 0, paused = false, lastEffect = -1, activeVoices = 0;
+  let nextBeat = 0, beat = 0, paused = false, lastEffect = -1, lastImpact = -1, activeVoices = 0;
   const button = document.getElementById("sound-button");
   const panel = document.getElementById("sound-panel");
   const mute = document.getElementById("sound-muted");
@@ -111,9 +111,22 @@
     else if(kind==="earth"||kind==="rock"||kind==="mud"){voice(130,42,at,.22,.19,"sine",effects);noise(at,.08,500,.08);}
     else {voice(380,180,at,.12,.09,"triangle",effects);voice(520,260,at+.03,.08,.05,"sine",effects);}
   }
+  function impact(counter=false, special=false, lethal=false) {
+    if (!canSound() || paused) return;
+    const at=context.currentTime;
+    if (at-lastImpact<.045) return;
+    lastImpact=at;
+    if(lethal){noise(at,.09,950,.1);voice(counter?260:190,65,at,.18,.12,"triangle",effects);}
+    else if(counter){voice(880,420,at,.12,.075,"square",effects);voice(1320,760,at+.018,.09,.035,"triangle",effects);}
+    else if(special){noise(at,.055,1450,.055);voice(240,120,at,.09,.045,"triangle",effects);}
+    else voice(180,105,at,.065,.035,"triangle",effects);
+  }
   function cue(kind) {
     if(!canSound())return;
     const at=context.currentTime;
+    if(kind==="warning"){
+      voice(1760,880,at,.16,.07,"square",effects);voice(1760,880,at+.25,.16,.07,"square",effects);return;
+    }
     const notes=kind==="defeat"?[293.66,246.94,196]:kind==="wave"?[196,293.66]:kind==="fusion"?[392,493.88,587.33,783.99]:[440,587.33];
     notes.forEach((f,i)=>voice(f,f,at+i*.1,.45,.12,"sine",effects));
   }
@@ -136,5 +149,5 @@
   mute.checked=settings.muted;
   mute.addEventListener("change",()=>{settings.muted=mute.checked;save();unlock();});
   save();
-  window.ElementAudio={attack,cue,setPaused};
+  window.ElementAudio={attack,impact,cue,setPaused};
 })();
